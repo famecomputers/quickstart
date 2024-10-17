@@ -574,14 +574,18 @@ playbooks_dir="/opt/oci-hpc/playbooks/"
 parser = argparse.ArgumentParser(description='Script to resize the CN')
 parser.add_argument('--compartment_ocid', help='OCID of the compartment, defaults to the Compartment OCID of the localhost')
 parser.add_argument('--cluster_name', help='Name of the cluster to resize. Defaults to the name included in the controller')
-parser.add_argument('mode', help='Mode type. add/remove node options, implicitly configures newly added nodes. Also implicitly reconfigure/restart services like Slurm to recognize new nodes. Similarly for remove option, terminates nodes and implicitly reconfigure/restart services like Slurm on rest of the cluster nodes to remove reference to deleted nodes.',choices=['add','remove','remove_unreachable','list','reconfigure'],default='list',nargs='?')
+parser.add_argument('mode', help='Mode type. add/remove node options, implicitly configures newly added nodes. Also implicitly reconfigure/restart services like Slurm to recognize new nodes. Similarly for remove option, \
+                    terminates nodes and implicitly reconfigure/restart services like Slurm on rest of the cluster nodes to remove reference to deleted nodes. \
+                    IMPORTANT: remove or remove_unreachable means delete the node from the cluster which means terminate the node. remove_unreachable should be used to remove specific nodes which are no longer reachable via ssh. \
+                    It gives you control on which nodes will be terminated by passing the --nodes parameter. ',choices=['add','remove','remove_unreachable','list','reconfigure'],default='list',nargs='?')
 parser.add_argument('number', type=int, help="Number of nodes to add or delete if a list of hostnames is not defined",nargs='?')
 parser.add_argument('--nodes', help="List of nodes to delete (Space Separated)",nargs='+')
 parser.add_argument('--no_reconfigure', help='If present. Does not rerun the playbooks',action='store_true',default=False)
 parser.add_argument('--user_logging', help='If present. Use the default settings in ~/.oci/config to connect to the API. Default is using instance_principal',action='store_true',default=False)
 parser.add_argument('--force', help='If present. Nodes will be removed even if the destroy playbook failed',action='store_true',default=False)
 parser.add_argument('--ansible_crucial', help='If present during reconfiguration, only crucial ansible playbooks will be executed on the live nodes. Non live nodes will be removed',action='store_true',default=False)
-parser.add_argument('--remove_unreachable', help='If present, nodes that are not sshable will be terminated before running the action that was requested (Example Adding a node) ',action='store_true',default=False)
+parser.add_argument('--remove_unreachable', help='If present, ALL nodes that are not sshable will be terminated before running the action that was requested (Example Adding a node). \
+                    CAUTION: Use this only if you want to remove ALL nodes that are unreachable. Instead, remove specific nodes that are unreachable by using positional argument remove_unreachable.',action='store_true',default=False)
 parser.add_argument('--quiet', help='If present, the script will not prompt for a response when removing nodes and will not give a reminder to save data from nodes that are being removed ',action='store_true',default=False)
 
 args = parser.parse_args()
