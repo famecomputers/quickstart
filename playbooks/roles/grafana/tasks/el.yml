@@ -21,39 +21,40 @@
     name: safe_yum
 
 - name: Install Python dependencies
+  become: true
   pip:
     name:
       - Flask
       - oci
-  become: yes
 
 - name: Copy webhook script to server
+  become: true
   copy:
     src: files/ons_webhook.py
     dest: /opt/ons_webhook.py
     mode: '0755'
 
-- name: Create systemd service for webhook
-  copy:
-    content: |
-      [Unit]
-      Description=OCI Webhook Service
-      After=network.target
-
-      [Service]
-      ExecStart=/usr/bin/python3 /opt/ons_webhook.py
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
+- name: Render systemd service for webhook
+  become: true
+  template:
+    src: ons-webhook.service.j2
     dest: /etc/systemd/system/ons-webhook.service
-    mode: '0644'
+    force: yes
+    backup: yes
+    mode: '0755'
+  vars:
+    prometheus_user: "prometheus"
+
+- name: Reload systemd daemon
+  become: true
+  command: systemctl daemon-reload
 
 - name: Start and enable webhook service
-  systemd:
+  become: true
+  service:
     name: ons-webhook
     state: started
-    enabled: yes
+    enabled: true
 
 - name: start grafana
   become: true
