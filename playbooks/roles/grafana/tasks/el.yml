@@ -20,6 +20,41 @@
   include_role: 
     name: safe_yum
 
+- name: Install Python dependencies
+  pip:
+    name:
+      - Flask
+      - oci
+  become: yes
+
+- name: Copy webhook script to server
+  copy:
+    src: files/ons_webhook.py
+    dest: /opt/ons_webhook.py
+    mode: '0755'
+
+- name: Create systemd service for webhook
+  copy:
+    content: |
+      [Unit]
+      Description=OCI Webhook Service
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/python3 /opt/ons_webhook.py
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/ons-webhook.service
+    mode: '0644'
+
+- name: Start and enable webhook service
+  systemd:
+    name: ons-webhook
+    state: started
+    enabled: yes
+
 - name: start grafana
   become: true
   service: 
