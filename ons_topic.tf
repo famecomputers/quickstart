@@ -13,7 +13,7 @@ output "notification_topic_ocid" {
 }
 
 resource "local_file" "write_topic_ocid" {
-  filename = "/home/opc/topic_ocid.txt"  # Replace with the absolute path
+  filename = "/home/opc/topic/topic_ocid.txt"
   content  = "${oci_ons_notification_topic.grafana_alerts.id}"
   depends_on = [oci_ons_notification_topic.grafana_alerts]
 }
