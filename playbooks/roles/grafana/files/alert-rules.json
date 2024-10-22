@@ -1,0 +1,195 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: Errors requiring reboot
+      folder: Base Alerts
+      interval: 5m
+      rules:
+        - uid: ubkpkofyievt
+          title: XID Error Check Alert
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: xid_error_check==0
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: XID error check has failed. The XID error check value is 0, indicating a potential issue with the system’s transaction or GPU hardware error on {{hostname}}. Immediate investigation is required.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: "id_slack_channel"
+        - uid: j9izqq8ayfyy
+          title: GPU ECC Error Check Alert
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: gpu_ecc_error_check == 0
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: GPU ECC error check has failed. The ECC error check value is 0, indicating a potential memory issue with the GPU on {{hostname}}. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: "id_slack_channel"
+        - uid: z8q9r1gkfdhj
+          title: GPU Row Remap Error Check Alert
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: gpu_row_remap_error_check == 1
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: GPU row remap error check has failed. The row remap error check value is 1, indicating a potential issue with GPU memory that may require a reboot on {{hostname}}. Immediate investigation is recommended.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: "id_slack_channel"
+    - orgId: 1
+      name: Errors not requiring reboot
+      folder: Base Alerts
+      interval: 5m
+      rules: 
+        - uid: x7c4s8kqlgfd
+          title: RDMA Device Status Alert
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: rdma_device_status == 0
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: RDMA device status check has failed. The RDMA device status value is 0, indicating a potential issue with the RDMA hardware on {{hostname}}. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: "id_slack_channel"
+        
+        - uid: j4p8w2lqdjfy
+          title: RDMA Link No Flap Alert
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: rdma_link_noflap == 0
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: RDMA link status check has failed. The RDMA link no flap value is 0, indicating potential instability in the RDMA link on {{hostname}}. Immediate investigation is required.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: "id_slack_channel"
+        
+        - uid: k5q2t3rjmfhh
+          title: RTTCC Status Alert
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: rttcc_status == 1
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: RTTCC status check has failed. The RTTCC status value is 1, indicating potential issues with congestion control on {{hostname}}. Immediate investigation is required.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: "id_slack_channel"
+        
