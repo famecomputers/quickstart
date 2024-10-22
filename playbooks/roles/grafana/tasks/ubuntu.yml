@@ -35,7 +35,7 @@
   become: true
   copy:
     src: files/ons_webhook.py
-    dest: /opt/ons_webhook.py
+    dest: /etc/grafana/provisioning/alerting/ons_webhook.py
     mode: '0755'
 
 - name: Render systemd service for webhook
