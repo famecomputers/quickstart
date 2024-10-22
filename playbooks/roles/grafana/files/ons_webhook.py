@@ -6,7 +6,7 @@ import logging
 app = Flask(__name__)
 
 # Function to read topic OCID from file
-def get_topic_ocid(file_path='$HOME/topic_ocid.txt'):
+def get_topic_ocid(file_path='/home/opc/topic_ocid.txt'):
     with open(file_path, 'r') as file:
         return file.read().strip()
 
