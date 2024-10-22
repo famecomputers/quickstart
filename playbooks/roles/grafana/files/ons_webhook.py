@@ -2,13 +2,25 @@ from flask import Flask, request, jsonify, render_template_string
 import oci
 import json
 import logging
+import os
 
 app = Flask(__name__)
 
 # Function to read topic OCID from file
 def get_topic_ocid(file_path='/tmp/topic_ocid.txt'):
-    with open(file_path, 'r') as file:
-        return file.read().strip()
+    try:
+        with open(file_path, 'r') as file:
+            topic_ocid = file.read().strip()
+            if not topic_ocid:
+                raise ValueError("Topic OCID is empty")
+            logging.info(f"Topic OCID successfully read: {topic_ocid}")
+            return topic_ocid
+    except FileNotFoundError:
+        logging.error(f"OCID file {file_path} not found.")
+        raise
+    except Exception as e:
+        logging.error(f"Error reading Topic OCID: {str(e)}")
+        raise
 
 # Get the topic OCID from the file
 topic_id = get_topic_ocid()
@@ -36,15 +48,13 @@ Annotations:
 @app.route('/grafana-webhook', methods=['POST'])
 def grafana_webhook():
     try:
-        config = oci.config.from_file()
-        oci.config.validate_config(config)
-    except oci.exceptions.ConfigFileNotFound as e:
-        logging.error(f"OCI Config error: {e}")
+        # Use Instance Principals for authentication
+        signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+        notification_client = oci.ons.NotificationDataPlaneClient({}, signer=signer)
+    except Exception as e:
+        logging.error(f"Error initializing OCI client: {e}")
         return jsonify({'status': 'error', 'message': 'Config error'}), 500
     
-    # Initialize NotificationDataPlaneClient for OCI Notifications
-    notification_client = oci.ons.NotificationDataPlaneClient(config)
-
     # Get the incoming alert data from the request
     alert_data = request.get_json()
     if not alert_data:
@@ -94,4 +104,5 @@ def grafana_webhook():
 
 # Start the Flask app and listen on port 5000
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     app.run(host='0.0.0.0', port=5000)
