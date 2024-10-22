@@ -34,7 +34,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "id_slack_channel"
+            receiver: "ons-webhook"
         - uid: j9izqq8ayfyy
           title: GPU ECC Error Check Alert
           condition: A
@@ -64,7 +64,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "id_slack_channel"
+            receiver: "ons-webhook"
         - uid: z8q9r1gkfdhj
           title: GPU Row Remap Error Check Alert
           condition: A
@@ -94,7 +94,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "id_slack_channel"
+            receiver: "ons-webhook"
     - orgId: 1
       name: Errors not requiring reboot
       folder: Base Alerts
@@ -129,8 +129,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "id_slack_channel"
-        
+            receiver: "ons-webhook"        
         - uid: j4p8w2lqdjfy
           title: RDMA Link No Flap Alert
           condition: A
@@ -160,8 +159,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "id_slack_channel"
-        
+            receiver: "ons-webhook"        
         - uid: k5q2t3rjmfhh
           title: RTTCC Status Alert
           condition: A
@@ -191,5 +189,184 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "id_slack_channel"
-        
+            receiver: "ons-webhook"
+    - orgId: 1
+      name: critical-alerts
+      folder: Critical
+      interval: 1m
+      rules:
+        - uid: de1nai5t7v0n4e
+          title: Controller or Login nodes should have disk free more than 20pct
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: code
+                expr: '(node_filesystem_avail_bytes{mountpoint="/", hostname=~".*controller|.*login"} / node_filesystem_size_bytes{mountpoint="/", hostname=~".*controller|.*login"})*100 '
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 20
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: ons-webhook
+        - uid: de1nemlz2brwgc
+          title: Controller or Login nodes should have memory free more than 20pct
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: code
+                expr: 100 * ((node_memory_MemAvailable_bytes{hostname=~".*controller|.*login"}) / (node_memory_MemTotal_bytes{hostname=~".*controller|.*login"}))
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 20
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: ons-webhook
+        - uid: ae1nigjtze6m8f
+          title: Controller or Login nodes should not have cpu usage more than 90%
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: code
+                expr: |
+                    (avg by (instance) (irate(node_cpu_seconds_total{mode="idle", hostname=~".*controller|.*login"}[5m])) * 100)
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 10
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: ons-webhook
