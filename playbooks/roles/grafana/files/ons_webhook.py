@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 # Function to read topic OCID from file
-def get_topic_ocid(file_path='/tmp/topic_ocid.txt'):
+def get_topic_ocid(file_path='/home/opc/topic_ocid.txt'):
     try:
         with open(file_path, 'r') as file:
             topic_ocid = file.read().strip()
