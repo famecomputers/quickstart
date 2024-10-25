@@ -1,12 +1,12 @@
 apiVersion: 1
 groups:
     - orgId: 1
-      name: Errors requiring reboot
-      folder: Base Alerts
+      name: Errors requiring reboot and may be repair
+      folder: Critical
       interval: 5m
       rules:
         - uid: ubkpkofyievt
-          title: XID Error Check Alert
+          title: XID Error Check
           condition: A
           data:
             - refId: A
@@ -26,6 +26,8 @@ groups:
                 maxDataPoints: 43200
                 range: false
                 refId: A
+          dashboardUid: ""
+          panelId: 0
           noDataState: NoData
           execErrState: OK
           for: 5m
@@ -34,9 +36,9 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "ons-webhook"
+            receiver: grafana-default-email
         - uid: j9izqq8ayfyy
-          title: GPU ECC Error Check Alert
+          title: GPU ECC Error Check
           condition: A
           data:
             - refId: A
@@ -56,6 +58,8 @@ groups:
                 maxDataPoints: 43200
                 range: false
                 refId: A
+          dashboardUid: ""
+          panelId: 0
           noDataState: NoData
           execErrState: OK
           for: 5m
@@ -64,9 +68,9 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "ons-webhook"
+            receiver: grafana-default-email
         - uid: z8q9r1gkfdhj
-          title: GPU Row Remap Error Check Alert
+          title: GPU Row Remap Error Check
           condition: A
           data:
             - refId: A
@@ -86,6 +90,8 @@ groups:
                 maxDataPoints: 43200
                 range: false
                 refId: A
+          dashboardUid: ""
+          panelId: 0
           noDataState: NoData
           execErrState: OK
           for: 5m
@@ -94,104 +100,9 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: "ons-webhook"
+            receiver: grafana-default-email
     - orgId: 1
-      name: Errors not requiring reboot
-      folder: Base Alerts
-      interval: 5m
-      rules: 
-        - uid: x7c4s8kqlgfd
-          title: RDMA Device Status Alert
-          condition: A
-          data:
-            - refId: A
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: bdys1o842usxsc
-              model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
-                editorMode: code
-                expr: rdma_device_status == 0
-                instant: true
-                intervalMs: 1000
-                legendFormat: '{{hostname}}'
-                maxDataPoints: 43200
-                range: false
-                refId: A
-          noDataState: NoData
-          execErrState: OK
-          for: 5m
-          annotations:
-            summary: RDMA device status check has failed. The RDMA device status value is 0, indicating a potential issue with the RDMA hardware on {{hostname}}. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
-          labels: {}
-          isPaused: false
-          notification_settings:
-            receiver: "ons-webhook"        
-        - uid: j4p8w2lqdjfy
-          title: RDMA Link No Flap Alert
-          condition: A
-          data:
-            - refId: A
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: bdys1o842usxsc
-              model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
-                editorMode: code
-                expr: rdma_link_noflap == 0
-                instant: true
-                intervalMs: 1000
-                legendFormat: '{{hostname}}'
-                maxDataPoints: 43200
-                range: false
-                refId: A
-          noDataState: NoData
-          execErrState: OK
-          for: 5m
-          annotations:
-            summary: RDMA link status check has failed. The RDMA link no flap value is 0, indicating potential instability in the RDMA link on {{hostname}}. Immediate investigation is required.
-          labels: {}
-          isPaused: false
-          notification_settings:
-            receiver: "ons-webhook"        
-        - uid: k5q2t3rjmfhh
-          title: RTTCC Status Alert
-          condition: A
-          data:
-            - refId: A
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: bdys1o842usxsc
-              model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
-                editorMode: code
-                expr: rttcc_status == 1
-                instant: true
-                intervalMs: 1000
-                legendFormat: '{{hostname}}'
-                maxDataPoints: 43200
-                range: false
-                refId: A
-          noDataState: NoData
-          execErrState: OK
-          for: 5m
-          annotations:
-            summary: RTTCC status check has failed. The RTTCC status value is 1, indicating potential issues with congestion control on {{hostname}}. Immediate investigation is required.
-          labels: {}
-          isPaused: false
-          notification_settings:
-            receiver: "ons-webhook"
-    - orgId: 1
-      name: critical-alerts
+      name: Events that might cause cluster instability
       folder: Critical
       interval: 1m
       rules:
@@ -245,6 +156,8 @@ groups:
                 maxDataPoints: 43200
                 refId: C
                 type: threshold
+          dashboardUid: ""
+          panelId: 0
           noDataState: NoData
           execErrState: Error
           for: 1m
@@ -252,7 +165,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: ons-webhook
+            receiver: grafana-default-email
         - uid: de1nemlz2brwgc
           title: Controller or Login nodes should have memory free more than 20pct
           condition: C
@@ -303,6 +216,8 @@ groups:
                 maxDataPoints: 43200
                 refId: C
                 type: threshold
+          dashboardUid: ""
+          panelId: 0
           noDataState: NoData
           execErrState: Error
           for: 1m
@@ -310,7 +225,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: ons-webhook
+            receiver: grafana-default-email
         - uid: ae1nigjtze6m8f
           title: Controller or Login nodes should not have cpu usage more than 90%
           condition: C
@@ -362,6 +277,8 @@ groups:
                 maxDataPoints: 43200
                 refId: C
                 type: threshold
+          dashboardUid: ""
+          panelId: 0
           noDataState: NoData
           execErrState: Error
           for: 1m
@@ -369,4 +286,681 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: ons-webhook
+            receiver: grafana-default-email
+    - orgId: 1
+      name: GPU throttling or shutdown due to different power and temperature violations
+      folder: Critical
+      interval: 1m
+      rules:
+        - uid: fe1xymqn9jdhcc
+          title: GPU throttle due to power violation
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: code
+                expr: DCGM_FI_DEV_POWER_VIOLATION
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: OK
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: ee1y7o4dlescgf
+          title: GPU throttle due to board limit violation
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: DCGM_FI_DEV_BOARD_LIMIT_VIOLATION
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: de1y7tanctptse
+          title: GPU throttle due to thermal violation
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: DCGM_FI_DEV_THERMAL_VIOLATION
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: fe1y7yhas6neod
+          title: GPU throttle due to low utilization violation
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: DCGM_FI_DEV_LOW_UTIL_VIOLATION
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: de1y8u72pu0owd
+          title: GPU throttle due to sync boost violation
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: DCGM_FI_DEV_SYNC_BOOST_VIOLATION
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: ae1ym8jm0xr7kd
+          title: GPU throttle due to reliability violation
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: DCGM_FI_DEV_RELIABILITY_VIOLATION
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: fe1yp0ap6tcsga
+          title: GPU device memory temperature exceeded 90% of slowdown temparature
+          condition: B
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                disableTextWrap: false
+                editorMode: code
+                exemplar: false
+                expr: DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SLOWDOWN_TEMP
+                format: time_series
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: B
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.9
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: avg
+                      type: query
+                datasource:
+                    name: Expression
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: B
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: be1ypf7nb22gwc
+          title: GPU device temperature exceeded 90% of slowdown temperature
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                editorMode: code
+                expr: DCGM_FI_DEV_GPU_TEMP / DCGM_FI_DEV_SLOWDOWN_TEMP
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.9
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: ee1yptedk60hsb
+          title: GPU device memory temperature exceeded 90% of shutdown temperature
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                editorMode: code
+                expr: DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SHUTDOWN_TEMP
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.9
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: ce1yqoyji0z5sa
+          title: GPU device temperature exceeded 90% of shutdown temperature
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: fe0v4n6vqzvggb
+              model:
+                editorMode: code
+                expr: DCGM_FI_DEV_GPU_TEMP / DCGM_FI_DEV_SHUTDOWN_TEMP
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.9
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+    - orgId: 1
+      name: Errors if occurring over longer periods that might require repair
+      folder: Critical
+      interval: 5m
+      rules:
+        - uid: x7c4s8kqlgfd
+          title: RDMA Device Status
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: rdma_device_status == 0
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          dashboardUid: ""
+          panelId: 0
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: RDMA device status check has failed. The RDMA device status value is 0, indicating a potential issue with the RDMA hardware on {{hostname}}. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: j4p8w2lqdjfy
+          title: RDMA Link Flapping
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: rdma_link_noflap == 0
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          dashboardUid: ""
+          panelId: 0
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: RDMA link status check has failed. The RDMA link no flap value is 0, indicating potential instability in the RDMA link on {{hostname}}. Immediate investigation is required.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: k5q2t3rjmfhh
+          title: RTTCC Status
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: bdys1o842usxsc
+              model:
+                datasource:
+                    type: prometheus
+                    uid: bdys1o842usxsc
+                editorMode: code
+                expr: rttcc_status == 1
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          dashboardUid: ""
+          panelId: 0
+          noDataState: NoData
+          execErrState: OK
+          for: 5m
+          annotations:
+            summary: RTTCC status check has failed. RTTCC should always be disabled, indicating potential issues with congestion control on {{hostname}}. Immediate investigation is required.
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
