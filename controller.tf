@@ -304,6 +304,7 @@ resource "null_resource" "cluster" {
       healthchecks              = var.healthchecks,
       change_hostname           = var.change_hostname,
       hostname_convention       = var.hostname_convention
+      ons_topic_ocid            = oci_ons_notification_topic.grafana_alerts.id
     })
 
     destination = "/opt/oci-hpc/playbooks/inventory"

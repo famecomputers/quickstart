@@ -6,24 +6,7 @@ import os
 
 app = Flask(__name__)
 
-# Function to read topic OCID from file
-def get_topic_ocid(file_path='/home/opc/topic_ocid.txt'):
-    try:
-        with open(file_path, 'r') as file:
-            topic_ocid = file.read().strip()
-            if not topic_ocid:
-                raise ValueError("Topic OCID is empty")
-            logging.info(f"Topic OCID successfully read: {topic_ocid}")
-            return topic_ocid
-    except FileNotFoundError:
-        logging.error(f"OCID file {file_path} not found.")
-        raise
-    except Exception as e:
-        logging.error(f"Error reading Topic OCID: {str(e)}")
-        raise
-
-# Get the topic OCID from the file
-topic_id = get_topic_ocid()
+topic_id = "{{ ons_topic_ocid }}"
 
 # Alert template for rendering the alert message
 alert_template = """
@@ -83,6 +66,9 @@ def grafana_webhook():
                 starts_at=starts_at, 
                 ends_at=ends_at
             )
+
+            # Log alert message for tracking alerts in case we dont have access to alerts
+            logging.info(alert_message);
 
             # Publish the formatted alert message to the OCI Notification Topic
             message_details = oci.ons.models.MessageDetails(
