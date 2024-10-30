@@ -259,7 +259,8 @@ resource "null_resource" "cluster_backup" {
       change_hostname           = var.change_hostname,
       hostname_convention       = var.hostname_convention,
       change_hostname           = var.change_hostname,
-      hostname_convention       = var.hostname_convention
+      hostname_convention       = var.hostname_convention,
+      ons_topic_ocid            = oci_ons_notification_topic.grafana_alerts.id
     })
 
     destination = "/opt/oci-hpc/playbooks/inventory"
@@ -416,7 +417,8 @@ resource "null_resource" "cluster_backup" {
       percentage_of_cores_enabled         = var.percentage_of_cores_enabled,
       healthchecks                        = var.healthchecks,
       change_hostname                     = var.change_hostname,
-      hostname_convention                 = var.hostname_convention
+      hostname_convention                 = var.hostname_convention,
+      ons_topic_ocid                      = oci_ons_notification_topic.grafana_alerts.id
     })
 
     destination = "/opt/oci-hpc/conf/variables.tf"

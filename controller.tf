@@ -46,6 +46,12 @@ resource "oci_resourcemanager_private_endpoint" "rms_private_endpoint" {
   subnet_id      = local.subnet_id
 }
 
+resource "oci_ons_notification_topic" "grafana_alerts" {
+  compartment_id = var.targetCompartment
+  name           = "grafana-alerts"
+  description    = "Topic for Grafana Alerts"
+}
+
 resource "null_resource" "boot_volume_backup_policy" {
   depends_on = [oci_core_instance.controller, oci_core_volume_backup_policy.controller_boot_volume_backup_policy, oci_core_volume_backup_policy_assignment.boot_volume_backup_policy]
   triggers = {
@@ -224,7 +230,7 @@ resource "null_resource" "controller" {
   }
 }
 resource "null_resource" "cluster" {
-  depends_on = [null_resource.controller, null_resource.backup, oci_core_compute_cluster.compute_cluster, oci_core_cluster_network.cluster_network, oci_core_instance.controller, oci_core_volume_attachment.controller_volume_attachment]
+  depends_on = [null_resource.controller, null_resource.backup, oci_core_compute_cluster.compute_cluster, oci_core_cluster_network.cluster_network, oci_core_instance.controller, oci_core_volume_attachment.controller_volume_attachment, oci_ons_notification_topic.grafana_alerts]
   triggers = {
     cluster_instances = join(", ", local.cluster_instances_names)
   }
@@ -303,7 +309,7 @@ resource "null_resource" "cluster" {
       api_user_ocid             = var.api_user_ocid,
       healthchecks              = var.healthchecks,
       change_hostname           = var.change_hostname,
-      hostname_convention       = var.hostname_convention
+      hostname_convention       = var.hostname_convention,
       ons_topic_ocid            = oci_ons_notification_topic.grafana_alerts.id
     })
 
