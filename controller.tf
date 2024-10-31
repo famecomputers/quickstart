@@ -48,7 +48,7 @@ resource "oci_resourcemanager_private_endpoint" "rms_private_endpoint" {
 
 resource "oci_ons_notification_topic" "grafana_alerts" {
   compartment_id = var.targetCompartment
-  name           = "grafana-alerts"
+  name           = "grafana-alerts-${random_pet.name.id}"
   description    = "Topic for Grafana Alerts"
 }
 
