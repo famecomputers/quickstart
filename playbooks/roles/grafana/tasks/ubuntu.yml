@@ -29,14 +29,16 @@
     name:
       - Flask
       - oci
+      - waitress
   become: yes
 
 - name: Copy webhook script to server
   become: true
-  copy:
-    src: files/ons_webhook.py
+  template:
+    src: templates/ons_webhook.py.j2
     dest: /etc/grafana/provisioning/alerting/ons_webhook.py
     mode: '0755'
+    remote_src: true
 
 - name: Render systemd service for webhook
   become: true
@@ -48,6 +50,7 @@
     owner: prometheus
     group: prometheus
     mode: '0755'
+    remote_src: true
 
 - name: Reload systemd daemon
   become: true

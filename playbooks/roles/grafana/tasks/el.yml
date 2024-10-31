@@ -26,13 +26,15 @@
     name:
       - Flask
       - oci
+      - waitress
 
 - name: Copy webhook script to server
   become: true
-  copy:
-    src: files/ons_webhook.py
-    dest: /etc/grafana/provisioning/alerting/ons_webhook.py
+  template:
+    src: templates/ons_webhook.py.j2
+    dest: /usr/local/bin/ons_webhook.py
     mode: '0755'
+    remote_src: true
 
 - name: Render systemd service for webhook
   become: true
@@ -42,6 +44,7 @@
     force: yes
     backup: yes
     mode: '0755'
+    remote_src: true
   vars:
     prometheus_user: "prometheus"
 

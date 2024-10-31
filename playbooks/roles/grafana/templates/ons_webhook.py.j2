@@ -8,25 +8,6 @@ app = Flask(__name__)
 
 topic_id = "{{ ons_topic_ocid }}"
 
-# Alert template for rendering the alert message
-alert_template = """
-Alert: {{ alert_name }}
-Status: {{ alert_status }}
-{{ alert_message }}
-Starts At: {{ starts_at }}
-Ends At: {{ ends_at }}
-
-Labels:
-{% for key, value in labels.items() %}
-{{ key }}: {{ value }}
-{% endfor %}
-
-Annotations:
-{% for key, value in annotations.items() %}
-{{ key }}: {{ value }}
-{% endfor %}
-"""
-
 # Route to handle incoming Grafana alerts
 @app.route('/grafana-webhook', methods=['POST'])
 def grafana_webhook():
