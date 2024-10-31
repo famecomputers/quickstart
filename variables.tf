@@ -693,6 +693,3 @@ variable "hostname_convention" {
   default = "GPU"
   type = string
 }
-variable "ons_topic_ocid" {
-  type = string
-}
