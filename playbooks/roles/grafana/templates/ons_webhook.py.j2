@@ -8,6 +8,19 @@ app = Flask(__name__)
 
 topic_id = "{{ ons_topic_ocid }}"
 
+def generate_message(alert_name, alert_status, alert_message, starts_at, ends_at, labels, annotations):
+    message_content = render_template_string(
+        template,
+        alert_name=alert_name,
+        alert_status=alert_status,
+        alert_message=alert_message,
+        starts_at=starts_at,
+        ends_at=ends_at,
+        labels=labels,
+        annotations=annotations
+    )
+    return message_content
+
 # Route to handle incoming Grafana alerts
 @app.route('/grafana-webhook', methods=['POST'])
 def grafana_webhook():
@@ -37,15 +50,14 @@ def grafana_webhook():
             desc = annotations.get('description', 'No Description')
 
             # Render the alert message using the template
-            alert_message = render_template_string(
-                alert_template, 
-                alert_name=name, 
-                alert_status=status, 
-                labels=labels, 
-                annotations=annotations, 
-                alert_message=desc, 
-                starts_at=starts_at, 
-                ends_at=ends_at
+            alert_message = generate_message(
+                alert_name=name,
+                alert_status=status,
+                alert_message=desc,
+                starts_at=starts_at,
+                ends_at=ends_at,
+                labels=labels,
+                annotations=annotations
             )
 
             # Log alert message for tracking alerts in case we dont have access to alerts
@@ -72,4 +84,8 @@ def grafana_webhook():
 # Start the Flask app and listen on port 5000
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    app.run(host='0.0.0.0', port=5000)
+    # Load and render the common template
+    with open('raw_message_template.txt') as f:
+        template = f.read()
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=5000)

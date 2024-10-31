@@ -36,6 +36,22 @@
     mode: '0755'
     remote_src: true
 
+- name: Copy message template to server
+  become: true
+  copy:
+    src: files/raw_message_template.txt
+    dest: /usr/local/bin/raw_message_template.txt
+    mode: '0755'
+    remote_src: true
+
+- name: Copy alert rules to grafana provisioning
+  become: true
+  copy:
+    src: files/alert-rules.yaml
+    dest: /etc/grafana/provisioning/alerting/alert-rules.yaml
+    mode: '0755'
+    remote_src: true
+
 - name: Render systemd service for webhook
   become: true
   template:
