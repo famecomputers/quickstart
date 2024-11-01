@@ -29,7 +29,7 @@ groups:
           execErrState: OK
           for: 5m
           annotations:
-            summary: XID error check has failed. The XID error check value is 0, indicating a potential issue with the system’s transaction or GPU hardware error on {{hostname}}. Immediate investigation is required.
+            summary: XID error check has failed. The XID error check value is 0, indicating a potential issue with the system’s transaction or GPU hardware error. Immediate investigation is required.
           labels: {}
           isPaused: false
           notification_settings:
@@ -58,7 +58,7 @@ groups:
           execErrState: OK
           for: 5m
           annotations:
-            summary: GPU ECC error check has failed. The ECC error check value is 0, indicating a potential memory issue with the GPU on {{hostname}}. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
+            summary: GPU ECC error check has failed. The ECC error check value is 0, indicating a potential memory issue with the GPU. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
           labels: {}
           isPaused: false
           notification_settings:
@@ -87,7 +87,7 @@ groups:
           execErrState: OK
           for: 5m
           annotations:
-            summary: GPU row remap error check has failed. The row remap error check value is 1, indicating a potential issue with GPU memory that may require a reboot on {{hostname}}. Immediate investigation is recommended.
+            summary: GPU row remap error check has failed. The row remap error check value is 1, indicating a potential issue with GPU memory that may require a reboot. Immediate investigation is recommended.
           labels: {}
           isPaused: false
           notification_settings:
@@ -118,7 +118,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations: 
+            summary: Controller and login nodes low disk free space could result in potential loss of access. Immediate investigation is recommended.
           labels: {}
           isPaused: false
           notification_settings:
@@ -144,7 +145,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: Controller and login nodes having low memory could result in potential loss of access. Immediate investigation is recommended.
           labels: {}
           isPaused: false
           notification_settings:
@@ -170,7 +172,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: Controller and login nodes having low cpu availability could result in potential loss of access. Immediate investigation is recommended.
           labels: {}
           isPaused: false
           notification_settings:
@@ -201,7 +204,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU throttling due to power violation. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -227,7 +231,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU throttling due to board limit violation. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -253,7 +258,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU throttling due to thermal violation. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -279,7 +285,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations: 
+            summary: GPU throttling due to low utilization violation. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -305,7 +312,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU throttling due to sync boost violation. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -331,7 +339,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU throttling due to reliability violation. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -357,7 +366,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU device temperature exceeded 90pct of SLOWdown temperature. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -383,7 +393,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU device temperature exceeded 90pct of SHUTdown temperature. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -409,7 +420,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU memory temperature exceeded 90pct of SLOWdown temperature. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -435,7 +447,8 @@ groups:
           noDataState: NoData
           execErrState: OK
           for: 1m
-          annotations: {}
+          annotations:
+            summary: GPU memory temperature exceeded 90pct of SHUTdown temperature. May require reboot.
           labels: {}
           isPaused: false
           notification_settings:
@@ -469,7 +482,7 @@ groups:
           execErrState: OK
           for: 5m
           annotations:
-            summary: RDMA device status check has failed. The RDMA device status value is 0, indicating a potential issue with the RDMA hardware on {{hostname}}. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
+            summary: RDMA device status check has failed. The RDMA device status value is 0, indicating a potential issue with the RDMA hardware. Immediate investigation is required, and a node reboot may be necessary if the issue persists.
           labels: {}
           isPaused: false
           notification_settings:
@@ -498,7 +511,7 @@ groups:
           execErrState: OK
           for: 5m
           annotations:
-            summary: RDMA link status check has failed. The RDMA link no flap value is 0, indicating potential instability in the RDMA link on {{hostname}}. Immediate investigation is required.
+            summary: RDMA link status check has failed. The RDMA link no flap value is 0, indicating potential instability in the RDMA link. Immediate investigation is required.
           labels: {}
           isPaused: false
           notification_settings:
@@ -527,7 +540,7 @@ groups:
           execErrState: OK
           for: 5m
           annotations:
-            summary: RTTCC status check has failed. RTTCC should always be disabled, indicating potential issues with congestion control on {{hostname}}. Immediate investigation is required.
+            summary: RTTCC status check has failed. RTTCC should always be disabled, indicating potential issues with congestion control. Immediate investigation is required.
           labels: {}
           isPaused: false
           notification_settings:
