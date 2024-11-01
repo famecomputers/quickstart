@@ -1,4 +1,13 @@
 apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: ons-webhook
+    receivers:
+    - uid: ons
+      type: webhook
+      settings:
+        url: http://localhost:5000/grafana-webhook
+        httpMethod: POST
 groups:
     - orgId: 1
       name: Errors requiring reboot and may be repair
@@ -33,7 +42,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: ecc-error
           title: GPU ECC Error Check
           condition: A
@@ -62,7 +71,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: row-remap-error
           title: GPU Row Remap Error Check
           condition: A
@@ -91,7 +100,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
     - orgId: 1
       name: Events that might cause cluster instability
       folder: Critical
@@ -123,7 +132,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: mem-20pct
           title: Controller or Login nodes should have memory free more than 20pct
           condition: A
@@ -150,7 +159,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: cpu-20pct
           title: Controller or Login nodes should not have cpu usage more than 90%
           condition: A
@@ -177,7 +186,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
     - orgId: 1
       name: GPU throttling or shutdown due to different power and temperature violations
       folder: Critical
@@ -209,7 +218,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: throttle-board
           title: GPU throttle due to board limit violation
           condition: A
@@ -236,7 +245,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email          
+            receiver: ons-webhook         
         - uid: throttle-thermal
           title: GPU throttle due to thermal violation
           condition: A
@@ -263,7 +272,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email   
+            receiver: ons-webhook  
         - uid: throttle-util
           title: GPU throttle due to low utilization violation
           condition: A
@@ -290,7 +299,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email  
+            receiver: ons-webhook 
         - uid: throttle-sync
           title: GPU throttle due to sync boost violation
           condition: A
@@ -317,7 +326,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email  
+            receiver: ons-webhook
         - uid: throttle-reliability
           title: GPU throttle due to reliability violation
           condition: A
@@ -344,7 +353,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email 
+            receiver: ons-webhook
         - uid: gpu-temp-slowdown
           title: GPU device memory temperature exceeded 90% of slowdown temparature
           condition: A
@@ -371,7 +380,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email 
+            receiver: ons-webhook
         - uid: gpu-temp-shutdown
           title: GPU device temperature exceeded 90% of shutdown temperature
           condition: A
@@ -398,7 +407,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email 
+            receiver: ons-webhook
         - uid: mem-temp-slowdown
           title: GPU device memory temperature exceeded 90% of slowdown temperature
           condition: A
@@ -425,7 +434,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email 
+            receiver: ons-webhook
         - uid: mem-temp-shutdown
           title: GPU device memory temperature exceeded 90% of shutdown temperature
           condition: A
@@ -452,7 +461,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email 
+            receiver: ons-webhook
     - orgId: 1
       name: Errors if occurring over longer periods that might require repair
       folder: Critical
@@ -486,7 +495,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: rdma-link-flap
           title: RDMA Link Flapping
           condition: A
@@ -515,7 +524,7 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
         - uid: rttcc-status
           title: RTTCC Status
           condition: A
@@ -544,4 +553,4 @@ groups:
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: ons-webhook
