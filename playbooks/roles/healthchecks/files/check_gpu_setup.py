@@ -358,6 +358,22 @@ def check_gpu_count():
             logger.warning("Skipping GPU count test: nvidia-smi and lspci commands not found")
             return None
 
+def check_gpu_pcie():
+    # Both A100 and H100 have x16
+    pcie_w = 16
+    result = subprocess.run(['nvidia-smi', '--query-gpu=pcie.link.width.current', '--format=csv,noheader'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        logger.warning("GPU PCIe Widths Test: Command nvidia-smi failed")
+    else:
+        output = result.stdout.decode('utf-8').rstrip()
+        widths = list(map(int, output.split('\n')))
+        if all(width == pcie_w for width in widths):
+            logger.info("GPU PCIe Width Test: Passed")
+        else:
+            logger.warning("GPU PCIe Width Test: Failed")
+            return pcie_w - int( sum(widths) / len(widths) )
+    return None
+
 def slurm_reason(message):
     global slurm_drain_reason
     global slurm_error_count
@@ -455,6 +471,13 @@ if __name__ == '__main__':
         logger.warning(f"Failed to check the number of GPUs with error: {e}")
         gpu_results = None
 
+    # Check GPU PCIe Widths
+    try:
+        gpu_pcie_results = check_gpu_pcie()
+    except Exception as e:
+        logger.warning(f"Failed to check GPU PCIe Width with error: {e}")
+        gpu_pcie_results = None
+
     # Summarize the results
     try:
         host_serial = get_host_serial()
@@ -524,6 +547,9 @@ if __name__ == '__main__':
     if gpu_results:
         logger.error(f"{host_serial} - Missing GPU(s): {gpu_results}")
         slurm_reason("Missing GPU Error")
+    if gpu_pcie_results:
+        logger.error(f"{host_serial} - GPU PCIe Width: {gpu_pcie_results}")
+        slurm_reason("GPU PCIe Width Error")
 
     datetime_str = datetime.now().strftime('%Y-%m-%d-%H%M%S')
     logger.info(f"Finished GPU host setup check at: {datetime_str}")
