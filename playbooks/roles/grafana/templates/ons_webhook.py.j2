@@ -85,7 +85,7 @@ def grafana_webhook():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     # Load and render the common template
-    with open('/usr/local/bin/raw_message_template.txt') as f:
+    with open('/etc/raw_message_template.txt') as f:
         template = f.read()
     from waitress import serve
     serve(app, host='0.0.0.0', port=5000)

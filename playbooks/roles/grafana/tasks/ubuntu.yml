@@ -44,7 +44,7 @@
   become: true
   copy:
     src: files/raw_message_template.txt
-    dest: /usr/local/bin/raw_message_template.txt
+    dest: /etc/raw_message_template.txt
     mode: '0755'
 
 - name: Copy alert rules to grafana provisioning

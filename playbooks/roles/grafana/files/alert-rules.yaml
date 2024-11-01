@@ -5,7 +5,7 @@ groups:
       folder: Critical
       interval: 5m
       rules:
-        - uid: ubkpkofyievt
+        - uid: xid-error
           title: XID Error Check
           condition: A
           data:
@@ -13,11 +13,8 @@ groups:
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: bdys1o842usxsc
+              datasourceUid: Prometheus
               model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
                 editorMode: code
                 expr: xid_error_check==0
                 instant: true
@@ -37,7 +34,7 @@ groups:
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: j9izqq8ayfyy
+        - uid: ecc-error
           title: GPU ECC Error Check
           condition: A
           data:
@@ -45,11 +42,8 @@ groups:
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: bdys1o842usxsc
+              datasourceUid: Prometheus
               model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
                 editorMode: code
                 expr: gpu_ecc_error_check == 0
                 instant: true
@@ -69,7 +63,7 @@ groups:
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: z8q9r1gkfdhj
+        - uid: row-remap-error
           title: GPU Row Remap Error Check
           condition: A
           data:
@@ -77,11 +71,8 @@ groups:
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: bdys1o842usxsc
+              datasourceUid: Prometheus
               model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
                 editorMode: code
                 expr: gpu_row_remap_error_check == 1
                 instant: true
@@ -106,181 +97,78 @@ groups:
       folder: Critical
       interval: 1m
       rules:
-        - uid: de1nai5t7v0n4e
+        - uid: disk-20pct
           title: Controller or Login nodes should have disk free more than 20pct
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
                 editorMode: code
-                expr: '(node_filesystem_avail_bytes{mountpoint="/", hostname=~".*controller|.*login"} / node_filesystem_size_bytes{mountpoint="/", hostname=~".*controller|.*login"})*100 '
-                fullMetaSearch: false
-                includeNullMetadata: true
+                expr: ((node_filesystem_avail_bytes{mountpoint="/", hostname=~".*controller|.*login"} / node_filesystem_size_bytes{mountpoint="/", hostname=~".*controller|.*login"})*100) < 20
                 instant: true
                 intervalMs: 1000
-                legendFormat: __auto
+                legendFormat: '{{hostname}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 20
-                        type: lt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
-          dashboardUid: ""
-          panelId: 0
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: de1nemlz2brwgc
+        - uid: mem-20pct
           title: Controller or Login nodes should have memory free more than 20pct
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
                 editorMode: code
-                expr: 100 * ((node_memory_MemAvailable_bytes{hostname=~".*controller|.*login"}) / (node_memory_MemTotal_bytes{hostname=~".*controller|.*login"}))
-                fullMetaSearch: false
-                includeNullMetadata: true
+                expr: (100 * ((node_memory_MemAvailable_bytes{hostname=~".*controller|.*login"}) / (node_memory_MemTotal_bytes{hostname=~".*controller|.*login"}))) < 20
                 instant: true
                 intervalMs: 1000
-                legendFormat: __auto
+                legendFormat: '{{hostname}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 20
-                        type: lt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
-          dashboardUid: ""
-          panelId: 0
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: ae1nigjtze6m8f
+        - uid: cpu-20pct
           title: Controller or Login nodes should not have cpu usage more than 90%
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
                 editorMode: code
-                expr: |
-                    (avg by (instance) (irate(node_cpu_seconds_total{mode="idle", hostname=~".*controller|.*login"}[5m])) * 100)
-                fullMetaSearch: false
-                includeNullMetadata: true
+                expr: ((avg by (instance) (irate(node_cpu_seconds_total{mode="idle", hostname=~".*controller|.*login"}[5m])) * 100)) < 20
                 instant: true
                 intervalMs: 1000
-                legendFormat: __auto
+                legendFormat: '{{hostname}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 10
-                        type: lt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
-          dashboardUid: ""
-          panelId: 0
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
@@ -292,56 +180,24 @@ groups:
       folder: Critical
       interval: 1m
       rules:
-        - uid: fe1xymqn9jdhcc
+        - uid: throttle-power
           title: GPU throttle due to power violation
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
                 editorMode: code
-                expr: DCGM_FI_DEV_POWER_VIOLATION
-                fullMetaSearch: false
-                includeNullMetadata: true
+                expr: (DCGM_FI_DEV_POWER_VIOLATION) > 0
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
           execErrState: OK
           for: 1m
@@ -350,525 +206,246 @@ groups:
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: ee1y7o4dlescgf
+        - uid: throttle-board
           title: GPU throttle due to board limit violation
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
-                editorMode: builder
-                expr: DCGM_FI_DEV_BOARD_LIMIT_VIOLATION
-                fullMetaSearch: false
-                includeNullMetadata: true
+                editorMode: code
+                expr: (DCGM_FI_DEV_BOARD_LIMIT_VIOLATION) > 0
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
-        - uid: de1y7tanctptse
+            receiver: grafana-default-email          
+        - uid: throttle-thermal
           title: GPU throttle due to thermal violation
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
-                editorMode: builder
-                expr: DCGM_FI_DEV_THERMAL_VIOLATION
-                fullMetaSearch: false
-                includeNullMetadata: true
+                editorMode: code
+                expr: (DCGM_FI_DEV_THERMAL_VIOLATION) > 0
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
-        - uid: fe1y7yhas6neod
+            receiver: grafana-default-email   
+        - uid: throttle-util
           title: GPU throttle due to low utilization violation
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
-                editorMode: builder
-                expr: DCGM_FI_DEV_LOW_UTIL_VIOLATION
-                fullMetaSearch: false
-                includeNullMetadata: true
+                editorMode: code
+                expr: (DCGM_FI_DEV_LOW_UTIL_VIOLATION) > 0
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
-        - uid: de1y8u72pu0owd
+            receiver: grafana-default-email  
+        - uid: throttle-sync
           title: GPU throttle due to sync boost violation
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
-                editorMode: builder
-                expr: DCGM_FI_DEV_SYNC_BOOST_VIOLATION
-                fullMetaSearch: false
-                includeNullMetadata: true
+                editorMode: code
+                expr: (DCGM_FI_DEV_SYNC_BOOST_VIOLATION) > 0
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
-        - uid: ae1ym8jm0xr7kd
+            receiver: grafana-default-email  
+        - uid: throttle-reliability
           title: GPU throttle due to reliability violation
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
-                editorMode: builder
-                expr: DCGM_FI_DEV_RELIABILITY_VIOLATION
-                fullMetaSearch: false
-                includeNullMetadata: true
+                editorMode: code
+                expr: (DCGM_FI_DEV_RELIABILITY_VIOLATION) > 0
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
-        - uid: fe1yp0ap6tcsga
+            receiver: grafana-default-email 
+        - uid: gpu-temp-slowdown
           title: GPU device memory temperature exceeded 90% of slowdown temparature
-          condition: B
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
-                disableTextWrap: false
                 editorMode: code
-                exemplar: false
-                expr: DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SLOWDOWN_TEMP
-                format: time_series
-                fullMetaSearch: false
-                includeNullMetadata: true
+                expr: (DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SLOWDOWN_TEMP) > 0.9
                 instant: true
                 intervalMs: 1000
                 legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-                useBackend: false
-            - refId: B
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0.9
-                            - 0
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params: []
-                      reducer:
-                        params: []
-                        type: avg
-                      type: query
-                datasource:
-                    name: Expression
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: B
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
-        - uid: be1ypf7nb22gwc
-          title: GPU device temperature exceeded 90% of slowdown temperature
-          condition: C
-          data:
-            - refId: A
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: fe0v4n6vqzvggb
-              model:
-                editorMode: code
-                expr: DCGM_FI_DEV_GPU_TEMP / DCGM_FI_DEV_SLOWDOWN_TEMP
-                instant: true
-                intervalMs: 1000
-                legendFormat: __auto
-                maxDataPoints: 43200
-                range: false
-                refId: A
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0.9
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
-          noDataState: NoData
-          execErrState: Error
-          for: 1m
-          annotations: {}
-          labels: {}
-          isPaused: false
-          notification_settings:
-            receiver: grafana-default-email
-        - uid: ee1yptedk60hsb
-          title: GPU device memory temperature exceeded 90% of shutdown temperature
-          condition: C
-          data:
-            - refId: A
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: fe0v4n6vqzvggb
-              model:
-                editorMode: code
-                expr: DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SHUTDOWN_TEMP
-                instant: true
-                intervalMs: 1000
-                legendFormat: '{{hostname}} {{device}}'
-                maxDataPoints: 43200
-                range: false
-                refId: A
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0.9
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
-          noDataState: NoData
-          execErrState: Error
-          for: 1m
-          annotations: {}
-          labels: {}
-          isPaused: false
-          notification_settings:
-            receiver: grafana-default-email
-        - uid: ce1yqoyji0z5sa
+            receiver: grafana-default-email 
+        - uid: gpu-temp-shutdown
           title: GPU device temperature exceeded 90% of shutdown temperature
-          condition: C
+          condition: A
           data:
             - refId: A
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: fe0v4n6vqzvggb
+              datasourceUid: Prometheus
               model:
                 editorMode: code
-                expr: DCGM_FI_DEV_GPU_TEMP / DCGM_FI_DEV_SHUTDOWN_TEMP
+                expr: (DCGM_FI_DEV_GPU_TEMP / DCGM_FI_DEV_SHUTDOWN_TEMP) > 0.9
                 instant: true
                 intervalMs: 1000
-                legendFormat: __auto
+                legendFormat: '{{hostname}} {{device}}'
                 maxDataPoints: 43200
                 range: false
                 refId: A
-            - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 0.9
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
           noDataState: NoData
-          execErrState: Error
+          execErrState: OK
           for: 1m
           annotations: {}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: grafana-default-email 
+        - uid: mem-temp-slowdown
+          title: GPU device memory temperature exceeded 90% of slowdown temperature
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: Prometheus
+              model:
+                editorMode: code
+                expr: (DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SLOWDOWN_TEMP) > 0.9
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email 
+        - uid: mem-temp-shutdown
+          title: GPU device memory temperature exceeded 90% of shutdown temperature
+          condition: A
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: Prometheus
+              model:
+                editorMode: code
+                expr: (DCGM_FI_DEV_MEMORY_TEMP / DCGM_FI_DEV_SHUTDOWN_TEMP) > 0.9
+                instant: true
+                intervalMs: 1000
+                legendFormat: '{{hostname}} {{device}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+          noDataState: NoData
+          execErrState: OK
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email 
     - orgId: 1
       name: Errors if occurring over longer periods that might require repair
       folder: Critical
       interval: 5m
       rules:
-        - uid: x7c4s8kqlgfd
+        - uid: rdma-device-status
           title: RDMA Device Status
           condition: A
           data:
@@ -876,11 +453,8 @@ groups:
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: bdys1o842usxsc
+              datasourceUid: Prometheus
               model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
                 editorMode: code
                 expr: rdma_device_status == 0
                 instant: true
@@ -900,7 +474,7 @@ groups:
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: j4p8w2lqdjfy
+        - uid: rdma-link-flap
           title: RDMA Link Flapping
           condition: A
           data:
@@ -908,11 +482,8 @@ groups:
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: bdys1o842usxsc
+              datasourceUid: Prometheus
               model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
                 editorMode: code
                 expr: rdma_link_noflap == 0
                 instant: true
@@ -932,7 +503,7 @@ groups:
           isPaused: false
           notification_settings:
             receiver: grafana-default-email
-        - uid: k5q2t3rjmfhh
+        - uid: rttcc-status
           title: RTTCC Status
           condition: A
           data:
@@ -940,11 +511,8 @@ groups:
               relativeTimeRange:
                 from: 600
                 to: 0
-              datasourceUid: bdys1o842usxsc
+              datasourceUid: Prometheus
               model:
-                datasource:
-                    type: prometheus
-                    uid: bdys1o842usxsc
                 editorMode: code
                 expr: rttcc_status == 1
                 instant: true
