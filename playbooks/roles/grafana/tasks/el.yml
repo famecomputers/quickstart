@@ -63,6 +63,7 @@
     prometheus_user: "prometheus"
 
 - name: Start and enable webhook service
+  become: true
   systemd:
     name: ons-webhook.service
     state: started
