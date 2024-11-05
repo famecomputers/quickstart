@@ -66,16 +66,12 @@
     mode: '0755'
     remote_src: true
 
-- name: Reload systemd daemon
-  become: true
-  command: systemctl daemon-reload
-
 - name: Start and enable webhook service
-  become: true
-  service:
-    name: ons-webhook
+  systemd:
+    name: ons-webhook.service
     state: started
-    enabled: true
+    enabled: yes
+    daemon_reload: yes
 
 - name: Start and enable Grafana service
   become: true

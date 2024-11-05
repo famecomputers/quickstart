@@ -62,16 +62,12 @@
   vars:
     prometheus_user: "prometheus"
 
-- name: Reload systemd daemon
-  become: true
-  command: systemctl daemon-reload
-
 - name: Start and enable webhook service
-  become: true
-  service:
-    name: ons-webhook
+  systemd:
+    name: ons-webhook.service
     state: started
-    enabled: true
+    enabled: yes
+    daemon_reload: yes
 
 - name: start grafana
   become: true
