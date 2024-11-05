@@ -624,7 +624,7 @@ for inv_vars in inventory_dict["all:vars"]:
 dns_entries=True
 for inv_vars in inventory_dict["all:vars"]:
     if inv_vars.startswith("dns_entries"):
-        dns_entries=bool(inv_vars.split("dns_entries=")[1].strip())
+        dns_entries=(inv_vars.split("dns_entries=")[1].strip().lower() == "true")
         break
 hostname_convention=None
 for inv_vars in inventory_dict["all:vars"]:
@@ -644,7 +644,7 @@ for inv_vars in inventory_dict["all:vars"]:
 slurm_name_change=None
 for inv_vars in inventory_dict["all:vars"]:
     if inv_vars.startswith("change_hostname"):
-        slurm_name_change=bool(inv_vars.split("change_hostname=")[1].strip())
+        slurm_name_change=(inv_vars.split("change_hostname=")[1].strip().lower() == "true")
         break
 
 hostnames=args.nodes
