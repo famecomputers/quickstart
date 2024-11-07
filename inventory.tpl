@@ -84,3 +84,5 @@ dns_entries=${dns_entries}
 healthchecks=${healthchecks}
 change_hostname=${change_hostname}
 hostname_convention=${hostname_convention}
+ons_topic_ocid=${ons_topic_ocid}
+

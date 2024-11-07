@@ -26,9 +26,9 @@ local health_status = [
 ];
 
 local cluster_metrics = [
-{ expr: 'avg by (cluster_name) (node_load1)', legend_format: '1m load average {{cluster_name}}', title: 'Cluster 1m load average', unit: 'percent' },
-{ expr: 'avg by (cluster_name) (node_load5)', legend_format: '5m load average {{cluster_name}}', title: 'Cluster 5m load average', unit: 'percent' },
-{ expr: 'avg by (cluster_name) (node_load15)', legend_format: '15m load average {{cluster_name}}', title: 'Cluster 15m load average', unit: 'percent' },
+{ expr: 'avg by (cluster_name) (node_load1{cluster_name=~"$cluster_name"})', legend_format: '1m load average {{cluster_name}}', title: 'Cluster 1m load average', unit: 'percent' },
+{ expr: 'avg by (cluster_name) (node_load5{cluster_name=~"$cluster_name"})', legend_format: '5m load average {{cluster_name}}', title: 'Cluster 5m load average', unit: 'percent' },
+{ expr: 'avg by (cluster_name) (node_load15{cluster_name=~"$cluster_name"})', legend_format: '15m load average {{cluster_name}}', title: 'Cluster 15m load average', unit: 'percent' },
 ];
 
 local node_metrics = [
