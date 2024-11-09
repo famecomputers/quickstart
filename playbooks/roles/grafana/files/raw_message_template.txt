@@ -1,3 +1,8 @@
+  _,_,  _,__,_, _
+ / \|  /_\|_)|\/|
+ |~|| ,| || \|  |
+ ~ ~~~~~ ~~ ~~  ~
+
 Alert: {{ alert_name }}
 Status: {{ alert_status }}
 {{ alert_message }}
