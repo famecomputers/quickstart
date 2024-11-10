@@ -15,7 +15,7 @@ groups:
       interval: 1m
       rules:
         - uid: cpu-20pct
-          title: Controller or Login nodes should not have cpu usage more than 90% (copy)
+          title: Controller or Login nodes should not have cpu usage more than 90%
           condition: B
           data:
             - refId: A
