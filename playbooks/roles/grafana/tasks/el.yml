@@ -50,7 +50,7 @@
     dest: /etc/systemd/system/ons-webhook.service
     force: yes
     backup: yes
-    mode: '0755'
+    mode: '0644'
     remote_src: true
   vars:
     prometheus_user: "prometheus"
