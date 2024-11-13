@@ -43,13 +43,6 @@
     dest: /etc/raw_message_template.txt
     mode: '0755'
 
-- name: Copy alert rules to grafana provisioning
-  become: true
-  copy:
-    src: files/alert-rules.yaml
-    dest: /etc/grafana/provisioning/alerting/alert-rules.yaml
-    mode: '0755'
-
 - name: Render systemd service for webhook
   become: true
   template:
@@ -57,7 +50,7 @@
     dest: /etc/systemd/system/ons-webhook.service
     force: yes
     backup: yes
-    mode: '0755'
+    mode: '0644'
     remote_src: true
   vars:
     prometheus_user: "prometheus"
@@ -102,4 +95,30 @@
     ds_type: "prometheus"
     ds_url: "http://localhost:9090"
   ignore_errors: yes
+  register: output
 
+- name: Copy alert rules to grafana provisioning
+  become: true
+  copy:
+    src: files/alert-rules.yaml
+    dest: /etc/grafana/provisioning/alerting/alert-rules.yaml
+    mode: '0777'
+
+- name: Replace all occurrences of a specific string in files
+  become: true
+  ansible.builtin.replace:
+    path: /etc/grafana/provisioning/alerting/alert-rules.yaml
+    regexp: "DATASOURCE_UID"
+    replace: "{{ output.datasource.uid }}"
+
+- name: Restart grafana
+  become: true
+  ansible.builtin.service:
+    name: grafana-server
+    state: restarted
+
+- name: Restart ons-webhook
+  become: true
+  ansible.builtin.service:
+    name: ons-webhook
+    state: restarted
