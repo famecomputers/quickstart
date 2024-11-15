@@ -85,7 +85,7 @@ def check_rttcc_status():
         devices = ["mlx5_1", "mlx5_2", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
     elif shape == "BM.GPU4.8":
         devices = ["mlx5_0", "mlx5_1", "mlx5_2", "mlx5_3", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_13", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
-    elif shape == "BM.GPU.L40S-NC.4" or shape == "BM.GPU.A10.4":
+    else:
         logger.info(f"RTTCC status check not required")
         return link_status
     status = "disabled"
@@ -166,7 +166,7 @@ def check_ecc_errors():
 
 def check_row_remap_errors():
     remap_issues = []
-    recommanded_action=None
+    recommended_action=None
     try:
         # Run the nvidia-smi -q command
         result = subprocess.run(['nvidia-smi', '--query-remapped-rows=remapped_rows.pending,remapped_rows.failure,remapped_rows.uncorrectable', '--format=csv,noheader'], stdout=subprocess.PIPE)
@@ -189,25 +189,25 @@ def check_row_remap_errors():
         if tmp_data[0] != "0" and tmp_data[0] != "No":
             logger.debug(f"GPU: {i} - Row Remap Pending: {tmp_data[0]}")
             remap_issues.append(f"GPU: {i} Row Remap Pending: {tmp_data[0]}")
-            recommanded_action = "Reboot"
+            recommended_action = "Reboot"
         if tmp_data[1] != "0" and tmp_data[0] != "No":
             logger.debug(f"GPU: {i} - Row Remap Failure: {tmp_data[1]}")
             #remap_issues.append(f"GPU: {i} Row Remap Failure: {tmp_data[1]}")
-            recommanded_action = "Terminate"
+            recommended_action = "Terminate"
         if tmp_data[2] != "0" and tmp_data[0] != "No":
             logger.debug(f"GPU: {i} - Row Remap Uncorrectable: {tmp_data[2]}")
             if int(tmp_data[2]) > 512:
                 remap_issues.append(f"GPU: {i} - Row Remap Uncorrectable >512: {tmp_data[2]}")
-                recommanded_action = "Terminate"
+                recommended_action = "Terminate"
             else:
                 remap_issues.append(f"GPU: {i} - Row Remap Uncorrectable <512: {tmp_data[2]}")# Check if there are ecc_issues
-                recommanded_action = "Reboot"
+                recommended_action = "Reboot"
     if len(remap_issues) == 0:
         logger.info("GPU Remap Test: Passed")
     else:
         logger.warning("GPU Remap Test: Failed")
 
-    return remap_issues, recommanded_action
+    return remap_issues, recommended_action
 
 def check_rdma_link_status():
     status = True
@@ -426,7 +426,7 @@ def slurm_reason(message):
     slurm_drain_reason+=(message+"\n")
     slurm_error_count+=1
 
-def recommanded_action(current, action):
+def recommended_action(current, action):
     if action not in [None,"Reboot","LiveFix","Reboot&LiveFix","Terminate"]:
         print("No action was found")
         return 0
@@ -505,13 +505,13 @@ if __name__ == '__main__':
     try:
         metadata=get_metadata()
         shape=metadata['shape']
-        if shape == "BM.GPU.L40S-NC.4" or shape == "BM.GPU.A10.4":
-            logger.info(f"RDMA link flapping/down test not required")
-            lft_issues = {"failures": [], "link_down": []}
-        else:
+        if shape == "BM.GPU.H100.8" or shape == "BM.GPU.B4.8" or shape == "BM.GPU.A100-v2.8" or shape == "BM.GPU4.8":
             lft = LinkFlappingTest(time_interval=args.lf_interval)
             lft.get_rdma_link_failures()
             lft_issues = lft.process_rdma_link_flapping()
+        else:
+            logger.info(f"RDMA link flapping/down test not required")
+            lft_issues = {"failures": [], "link_down": []}
     except Exception as e:
         logger.warning(f"Failed to check RDMA link flapping with error: {e}")
         lft_issues = {"failures": [], "link_down": []}
@@ -589,7 +589,7 @@ if __name__ == '__main__':
                     ecc_error=True
         if ecc_error:
             slurm_reason("ECC Error")
-            action = recommanded_action(action, "Reboot")
+            action = recommended_action(action, "Reboot")
     if len(remap_results) > 0:
         remap_error=False
         for issue in remap_results:
@@ -600,60 +600,60 @@ if __name__ == '__main__':
                 remap_error=True
         if remap_error:
             slurm_reason("Remap Error")
-            action = recommanded_action(action, row_remap_action)
+            action = recommended_action(action, row_remap_action)
     if xid_results["status"] == "Failed":
         for xid in xid_results["results"]:
             for pci in xid_results["results"][xid]["results"]:
                 logger.error(f"{host_serial} - GPU Xid {xid} device: {pci}, {xid_results['results'][xid]['description']}")
                 slurm_reason("XID Error")
-                action = recommanded_action(action, "Reboot")
+                action = recommended_action(action, "Reboot")
     if len(rdma_link_issues) > 0:
         for issue in rdma_link_issues:
             logger.error(f"{host_serial} - RDMA link issues: {issue}")
             slurm_reason("RDMA Link Error")
-            action = recommanded_action(action, "LiveFix")
+            action = recommended_action(action, "LiveFix")
     if len(lft_issues["failures"]) > 0 or len(lft_issues["link_down"]) > 0:
         if len(lft_issues["failures"]) > 0:
             for issue in lft_issues["failures"]:
                 logger.error(f"{host_serial} - RDMA link flapping issues: {issue}")
                 slurm_reason("RDMA Link Flapping Error")
-                action = recommanded_action(action, "LiveFix")
+                action = recommended_action(action, "LiveFix")
         if len(lft_issues["link_down"]) > 0:
             for issue in lft_issues["link_down"]:
                 logger.error(f"{host_serial} - RDMA link down issues: {issue}")
                 slurm_reason("RDMA Link Down Error")
-                action = recommanded_action(action, "LiveFix")
+                action = recommended_action(action, "LiveFix")
     if bwt_results != None:
         if bwt_results["status"] == "Failed":
             for issue in bwt_results["issues"]:
                 logger.error(f"{host_serial} - GPU bandwidth issues: {issue}")
                 slurm_reason("GPU Bwt Error")
-                action = recommanded_action(action, "Terminate")
+                action = recommended_action(action, "Terminate")
     if bus_results:
         logger.error(f"{host_serial} - Bus issues: {bus_results}")
         slurm_reason("GPU Bus Error")
-        action = recommanded_action(action, "Terminate")
+        action = recommended_action(action, "Terminate")
     if gpu_results:
         logger.error(f"{host_serial} - Missing GPU(s): {gpu_results}")
         slurm_reason("Missing GPU Error")
-        action = recommanded_action(action, "Reboot")
+        action = recommended_action(action, "Reboot")
     if gpu_pcie_results:
         logger.error(f"{host_serial} - GPU PCIe Width: {gpu_pcie_results}")
         slurm_reason("GPU PCIe Width Error")
-        action = recommanded_action(action, "Terminate")
+        action = recommended_action(action, "Terminate")
 
     datetime_str = datetime.now().strftime('%Y-%m-%d-%H%M%S')
     logger.info(f"Finished GPU host setup check at: {datetime_str}")
-    if action is "Reboot":
-        logger.error("Recommanded Action is to Force Reboot from the console or API")
-    if action is "LiveFix":
-        logger.error("Recommanded Action is to Create a SR to Get the node fixed live")
-    if action is "Reboot&LiveFix":
-        logger.error("Recommanded Action is to Create a SR to Get the node fixed live as well as force reboot the node")
-    if action is "Terminate":
-        logger.error("Recommanded Action is to Terminate the node and Create a SR")
+    if action == "Reboot":
+        logger.error("Recommended Action is to Force Reboot from the console or API")
+    if action == "LiveFix":
+        logger.error("Recommended Action is to Create a SR to Get the node fixed live")
+    if action == "Reboot&LiveFix":
+        logger.error("Recommended Action is to Create a SR to Get the node fixed live as well as force reboot the node")
+    if action == "Terminate":
+        logger.error("Recommended Action is to Terminate the node and Create a SR")
     logger.info(f"Recomm: {datetime_str}")
 
     if slurm_error_count > 0 and args.slurm:
         print("Healthcheck:: "+slurm_drain_reason[:-1])
-        print("Healthcheck:: Recommanded Action:"+action)
+        print("Healthcheck:: Recommended Action:"+action)
