@@ -82,7 +82,8 @@ resource "local_file" "inventory" {
     use_compute_agent=var.use_compute_agent,
     healthchecks=var.healthchecks,
     change_hostname=var.change_hostname,
-    hostname_convention=var.hostname_convention
+    hostname_convention=var.hostname_convention,
+    ons_topic_ocid=oci_ons_notification_topic.grafana_alerts.id
     })
   filename   = "${local.controller_path}/inventory"
 }

@@ -85,6 +85,9 @@ def check_rttcc_status():
         devices = ["mlx5_1", "mlx5_2", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
     elif shape == "BM.GPU4.8":
         devices = ["mlx5_0", "mlx5_1", "mlx5_2", "mlx5_3", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_13", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
+    elif shape == "BM.GPU.L40S-NC.4" or shape == "BM.GPU.A10.4":
+        logger.info(f"RTTCC status check not required")
+        return link_status
     status = "disabled"
     status_dict = {"devices": {}}
     for device in devices:
@@ -206,13 +209,16 @@ def check_rdma_link_status():
     status = True
     metadata=get_metadata()
     shape=metadata['shape']
+    link_issues = []
     if shape == "BM.GPU.H100.8":
         devices = ["mlx5_0", "mlx5_1", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_12", "mlx5_13", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
     elif shape == "BM.GPU.B4.8" or shape == "BM.GPU.A100-v2.8":
         devices = ["mlx5_1", "mlx5_2", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
     elif shape == "BM.GPU4.8":
         devices = ["mlx5_0", "mlx5_1", "mlx5_2", "mlx5_3", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_13", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
-    link_issues = []
+    else:
+        logger.info(f"RDMA Link Status check not required")
+        return link_issues
     for device in devices:
         # Run the mlxlink command
         if not is_user_root():
@@ -306,7 +312,7 @@ def check_bus():
 
 def check_gpu_count():
 
-    lspci_expected_results = [  '0f:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)',
+    lspci_expected_results_gpu = [  '0f:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)',
                                 '2d:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)',
                                 '44:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)',
                                 '5b:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)',
@@ -315,6 +321,16 @@ def check_gpu_count():
                                 'c0:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)',
                                 'd8:00.0 3D controller: NVIDIA Corporation Device 2330 (rev a1)'
                              ]
+    lspci_expected_results_l40s = [  '16:00.0 3D controller: NVIDIA Corporation Device 26b9 (rev a1)',
+                                     '38:00.0 3D controller: NVIDIA Corporation Device 26b9 (rev a1)',
+                                     '82:00.0 3D controller: NVIDIA Corporation Device 26b9 (rev a1)',
+                                     'ac:00.0 3D controller: NVIDIA Corporation Device 26b9 (rev a1)'
+                                ]
+    lspci_expected_results_a10 = [  '17:00.0 3D controller: NVIDIA Corporation GA102GL [A10] (rev a1)',
+                                    '31:00.0 3D controller: NVIDIA Corporation GA102GL [A10] (rev a1)',
+                                    'b1:00.0 3D controller: NVIDIA Corporation GA102GL [A10] (rev a1)',
+                                    'ca:00.0 3D controller: NVIDIA Corporation GA102GL [A10] (rev a1)'
+                                ]
 
     # Check the number of GPUs
     try:
@@ -324,7 +340,16 @@ def check_gpu_count():
         tmp_results = []
         # remove empty lines
         lines = [line for line in lines if line]
-        if len(lines) == 8:
+        metadata=get_metadata()
+        shape=metadata['shape']
+        if shape == "BM.GPU.L40S-NC.4" or shape == "BM.GPU.A10.4":
+            if len(lines) == 4:
+                logger.info("GPU Count Test: Passed")
+            else:
+                logger.warning("GPU Count Test: Failed")
+                tmp_results.append(f"Expected 4 GPUs, found {len(lines)} using nvidia-smi command")
+            return tmp_results
+        elif len(lines) == 8:
             logger.info("GPU Count Test: Passed")
         else:
             logger.warning("GPU Count Test: Failed")
@@ -341,11 +366,28 @@ def check_gpu_count():
             lines = output.split('\n')
             tmp_results = []
             missing_gpus = []
+            metadata=get_metadata()
+            shape=metadata['shape']
+            find_number = ""
+            expected_gpus = ""
+            lspci_expected_results = ""
+            if shape == "BM.GPU.L40S-NC.4":
+                find_number = "26b9"
+                expected_gpus = 4
+                lspci_expected_results = lspci_expected_results_l40s
+            elif shape == "BM.GPU.A10.4":
+                find_number = "GA102GL"
+                expected_gpus = 4
+                lspci_expected_results = lspci_expected_results_a10
+            else:
+                find_number = "2330"
+                expected_gpus = 8
+                lspci_expected_results = lspci_expected_results_gpu
             for line in lines:
-                if line.find("NVIDIA") != -1 and line.find("2330") != -1:
+                if line.find("NVIDIA") != -1 and line.find(find_number) != -1:
                     tmp_results.append(line)
-            if not len(tmp_results) == 8:
-                logger.debug(f"Expected 8 GPUs, found {len(tmp_results)} in lspci output")
+            if not len(tmp_results) == expected_gpus:
+                logger.debug(f"Expected {expected_gpus} GPUs, found {len(tmp_results)} in lspci output")
                 for line in lspci_expected_results:
                     if line not in tmp_results:
                         missing_gpus.append(f"Missing GPU: {line}")
@@ -428,9 +470,15 @@ if __name__ == '__main__':
 
     # Check for RDMA link flapping
     try:
-        lft = LinkFlappingTest(time_interval=args.lf_interval)
-        lft.get_rdma_link_failures()
-        lft_issues = lft.process_rdma_link_flapping()
+        metadata=get_metadata()
+        shape=metadata['shape']
+        if shape == "BM.GPU.L40S-NC.4" or shape == "BM.GPU.A10.4":
+            logger.info(f"RDMA link flapping/down test not required")
+            lft_issues = {"failures": [], "link_down": []}
+        else:
+            lft = LinkFlappingTest(time_interval=args.lf_interval)
+            lft.get_rdma_link_failures()
+            lft_issues = lft.process_rdma_link_flapping()
     except Exception as e:
         logger.warning(f"Failed to check RDMA link flapping with error: {e}")
         lft_issues = {"failures": [], "link_down": []}
