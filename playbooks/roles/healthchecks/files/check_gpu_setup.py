@@ -420,6 +420,60 @@ def check_gpu_pcie():
             return pcie_w - int( sum(widths) / len(widths) )
     return None
 
+def check_wpa_auth(metadata):
+    # Determine the shape and required authenticated count
+    shape = metadata.get('shape')
+    if shape in ["BM.GPU.H100.8", "BM.GPU.B4.8", "BM.GPU.A100-v2.8", "BM.GPU4.8"]:
+        interface_range = range(16)
+        required_authenticated = 16
+    elif shape == "BM.GPU.MI300X.8":
+        interface_range = range(8)
+        required_authenticated = 8 
+    else:
+        logger.error("Unsupported machine shape.")
+        return ["Unsupported machine shape."]
+    
+    authenticated_count = 0 
+    wpa_auth_issues = []
+    current_state = "None"  # Define initial state, can be updated based on actual logic
+    
+    # Check each RDMA interface for WPA authentication status
+    for i in interface_range:
+        interface = f"rdma{i}"
+        try:
+            if not is_user_root():
+                command = ['sudo', 'wpa_cli', 'status', '-i', interface]
+            else:
+                command = ['wpa_cli', 'status', '-i', interface]
+    
+            result = subprocess.run(command, capture_output=True, text=True)
+    
+            for line in result.stdout.splitlines():
+                if "Supplicant PAE state" in line:
+                    if "AUTHENTICATED" in line:
+                        authenticated_count += 1
+                    break
+        except subprocess.CalledProcessError as e:
+            wpa_auth_issues.append(f"Error checking {interface}: {e}")
+            logger.warning(f"Error checking {interface}: {e}")
+
+    # Determine action based on authentication result
+    if authenticated_count < required_authenticated:
+        action = "Reboot"  # Set action as needed, e.g., "Reboot" if a reset is recommended
+        wpa_auth_issues.append(f"Only {authenticated_count} interfaces are AUTHENTICATED; expected at least {required_authenticated}.")
+        logger.error("WPA Authentication Check: Failed")
+    else:
+        action = None  # No action if check passes
+        logger.info("WPA Authentication Check: Passed")
+
+    # Call the recommanded_action function
+    final_action = recommended_action(current_state, action)
+    
+    if final_action != 0:  # Log or return the final action if applicable
+       logger.info(f"Recommended action based on current state: {final_action}")
+
+    return wpa_auth_issues if wpa_auth_issues else []
+
 def slurm_reason(message):
     global slurm_drain_reason
     global slurm_error_count
@@ -463,6 +517,7 @@ if __name__ == '__main__':
     parser.add_argument('--lf-interval', dest='lf_interval', default=6, type=int, help='Link flapping interval with no flapping or link down events (default: 6 (hours))')
     parser.add_argument('-a','--all', dest='run_all', action='store_true', default=False, help='Run all checks (default: False)')
     parser.add_argument('-slurm','--slurm', dest='slurm', action='store_true', default=False, help='Add a Slurm message')
+    parser.add_argument('-wa', '--wpa-auth', action="store_true", default=True, help="Run WPA authentication check")
     args = parser.parse_args()
 
     logger.setLevel(args.log_level)
@@ -559,6 +614,16 @@ if __name__ == '__main__':
         logger.warning(f"Failed to check GPU PCIe Width with error: {e}")
         gpu_pcie_results = None
 
+    # Check WPA authentication if the option is set
+    wpa_auth_results = None
+    if args.wpa_auth:
+        try:
+            metadata = get_metadata()
+            wpa_auth_results = check_wpa_auth(metadata)
+        except Exception as e:
+            logger.warning(f"Failed to get WPA Authentication status: {e}")
+            wpa_auth_results = None
+
     # Summarize the results
     try:
         host_serial = get_host_serial()
@@ -641,6 +706,11 @@ if __name__ == '__main__':
         logger.error(f"{host_serial} - GPU PCIe Width: {gpu_pcie_results}")
         slurm_reason("GPU PCIe Width Error")
         action = recommended_action(action, "Terminate")
+    if wpa_auth_results:
+        for issue in wpa_auth_results:
+            logger.error(f"{host_serial} - WPA authentication issue: {issue}")
+        slurm_reason("WPA Auth Error")
+        action = recommended_action(action, "Reboot")
 
     datetime_str = datetime.now().strftime('%Y-%m-%d-%H%M%S')
     logger.info(f"Finished GPU host setup check at: {datetime_str}")
