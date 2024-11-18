@@ -69,9 +69,11 @@ local dcgm_metrics = [
   { name: 'DCGM_FI_DEV_MEM_COPY_UTIL', title: 'Memory Copy Utilization', unit: 'percent' },
   { name: 'DCGM_FI_DEV_ENC_UTIL', title: 'Encoder Utilization', unit: 'percent' },
   { name: 'DCGM_FI_DEV_DEC_UTIL', title: 'Decoder Utilization', unit: 'percent' },
-  { name: 'DCGM_FI_DEV_FB_FREE', title: 'Framebuffer memory free (in MiB)', unit: 'megabytes' },
-  { name: 'DCGM_FI_DEV_FB_USED', title: 'Framebuffer memory used (in MiB)', unit: 'megabytes' },  
+  { name: 'DCGM_FI_DEV_FB_FREE', title: 'Framebuffer memory free (in MiB)', unit: 'mbytes' },
+  { name: 'DCGM_FI_DEV_FB_USED', title: 'Framebuffer memory used (in MiB)', unit: 'mbytes' },  
   { name: 'DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL', title: 'Total number of NVLink bandwidth counters for all lanes', unit: 'none' },
+  { name: 'DCGM_FI_PROF_PCIE_TX_BYTES', title: 'PCIe transmitted bytes (in MiB)', unit: 'MiBs' },
+  { name: 'DCGM_FI_PROF_PCIE_RX_BYTES', title: 'PCIe received bytes (in MiB)', unit: 'MiBs' },  
 ];
 
 local dcgm_errors = [
