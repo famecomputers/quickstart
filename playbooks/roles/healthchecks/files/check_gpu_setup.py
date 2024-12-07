@@ -477,10 +477,37 @@ def check_wpa_auth(metadata):
     # Call the recommanded_action function
     final_action = recommended_action(current_state, action)
     
-    if final_action != 0:  # Log or return the final action if applicable
-       logger.info(f"Recommended action based on current state: {final_action}")
 
     return wpa_auth_issues if wpa_auth_issues else []
+
+def check_fabric_manager():
+    fabric_manager_health = False
+    try:
+        # Run the nvidia-smi -q -i 0 | grep -i -A 2 Fabric
+        result = subprocess.run('nvidia-smi -q -i 0 | grep -i -A 2 Fabric', shell=True, stdout=subprocess.PIPE)
+        if result.returncode != 0:
+            logger.debug(f"Fabric Manager Check exited with error code: {result.returncode}")
+
+    except FileNotFoundError:
+        logger.warning("Skipping Fabric Manager test: nvidia-smi command not found")
+        return fabric_manager_health
+
+    # Decode the output from bytes to string
+    output = result.stdout.decode('utf-8')
+    logger.debug("Output: {}".format(output))
+    fabric_manager_status=False
+    fabric_manager_state=False
+    for i, line in enumerate(output.split('\n')):
+        if "State" in line:
+            if "Completed" in line:
+                fabric_manager_state = True
+        elif "Status" in line:
+            if "Success" in line:
+                fabric_manager_status = True
+        else:
+            continue
+    fabric_manager_health= ( fabric_manager_status and fabric_manager_state )
+    return fabric_manager_health
 
 def slurm_reason(message):
     global slurm_drain_reason
@@ -489,10 +516,10 @@ def slurm_reason(message):
     slurm_error_count+=1
 
 def recommended_action(current, action):
-    if action not in [None,"Reboot","LiveFix","Reboot&LiveFix","Terminate"]:
+    if action not in [None,"FabricManagerRestart","Reboot","LiveFix","Reboot&LiveFix","Terminate"]:
         print("No action was found")
         return 0
-    if action == "Reboot":
+    if action == "Reboot" or action == "FabricManagerRestart":
         if current == "Terminate":
             return current
         elif current == "LiveFix":
@@ -507,6 +534,8 @@ def recommended_action(current, action):
         elif current == "Reboot":
             return "Reboot&LiveFix"
         elif current == "Reboot&LiveFix":
+            return "Reboot&LiveFix"
+        elif current == "FabricManagerRestart":
             return "Reboot&LiveFix"
         else:
             return action
@@ -632,6 +661,15 @@ if __name__ == '__main__':
             logger.warning(f"Failed to get WPA Authentication status: {e}")
             wpa_auth_results = None
 
+    # Check for Fabric Manager Started
+    try:
+        fabric_manager_health = check_fabric_manager()
+    except Exception as e:
+        logger.warning(f"Failed to check Fabric Manager with error: {e}")
+        fabric_manager_health = True
+
+    if fabric_manager_health:
+        logger.info("Fabric Manager Running: Passed")
     # Summarize the results
     try:
         host_serial = get_host_serial()
@@ -723,7 +761,10 @@ if __name__ == '__main__':
             logger.error(f"{host_serial} - WPA authentication issue: {issue}")
         slurm_reason("WPA Auth Error")
         action = recommended_action(action, "Reboot")
-
+    if not fabric_manager_health:
+        logger.error(f"{host_serial} - Fabric Manager not started")
+        slurm_reason("Fabric Manager Error")
+        action = recommended_action(action, "FabricManagerRestart")
     datetime_str = datetime.now().strftime('%Y-%m-%d-%H%M%S')
     logger.info(f"Finished GPU host setup check at: {datetime_str}")
     if action == "Reboot":
@@ -734,7 +775,6 @@ if __name__ == '__main__':
         logger.error("Recommended Action is to Create a SR to Get the node fixed live as well as force reboot the node")
     if action == "Terminate":
         logger.error("Recommended Action is to Terminate the node and Create a SR")
-    logger.info(f"Recomm: {datetime_str}")
 
     if slurm_error_count > 0 and args.slurm:
         print("Healthcheck:: "+slurm_drain_reason[:-1])
