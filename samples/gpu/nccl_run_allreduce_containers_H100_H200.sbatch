@@ -34,8 +34,13 @@ shape=`curl -sH "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/
 if [ $shape == \"BM.GPU.H100.8\" ]
 then
   var_UCX_NET_DEVICES=eth0
+  var_NCCL_IB_HCA="=mlx5_0,mlx5_1,mlx5_3,mlx5_4,mlx5_5,mlx5_6,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_12,mlx5_13,mlx5_14,mlx5_15,mlx5_16,mlx5_17"
+elif [ $shape == \"BM.GPU.H200.8\" ]
+then
+  var_UCX_NET_DEVICES=eth0
+  var_NCCL_IB_HCA="=mlx5_0,mlx5_3,mlx5_4,mlx5_5,mlx5_6,mlx5_9,mlx5_10,mlx5_11"
 else
-  echo "Use the appropriate nccl test run script for non H100 nodes"
+  echo "Use the appropriate nccl test run script for non H100/H200 nodes"
 fi
 
 export NCCL_CROSS_NIC=0 \
@@ -51,7 +56,7 @@ export NCCL_CROSS_NIC=0 \
        NCCL_NET_PLUGIN=none \
        NCCL_SOCKET_IFNAME=eth0 \
        NCCL_IGNORE_CPU_AFFINITY=1 \
-       NCCL_IB_HCA="=mlx5_0,mlx5_1,mlx5_3,mlx5_4,mlx5_5,mlx5_6,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_12,mlx5_13,mlx5_14,mlx5_15,mlx5_16,mlx5_17" \
+       NCCL_IB_HCA="${var_NCCL_IB_HCA}" \
        NCCL_TOPO_FILE=/nfs/cluster/H100-topology.xml \
        HCOLL_ENABLE_MCAST_ALL=0 \
        coll_hcoll_enable=0 \

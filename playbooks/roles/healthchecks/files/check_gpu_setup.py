@@ -85,6 +85,8 @@ def check_rttcc_status():
         devices = ["mlx5_1", "mlx5_2", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
     elif shape == "BM.GPU4.8":
         devices = ["mlx5_0", "mlx5_1", "mlx5_2", "mlx5_3", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_13", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
+    elif shape == "BM.GPU.H200.8":
+        return link_status
     else:
         logger.info(f"RTTCC status check not required")
         return link_status
@@ -216,6 +218,8 @@ def check_rdma_link_status():
     link_issues = []
     if shape == "BM.GPU.H100.8":
         devices = ["mlx5_0", "mlx5_1", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_12", "mlx5_13", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
+    elif shape == "BM.GPU.H200.8":
+        devices = ["mlx5_0", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_9", "mlx5_10", "mlx5_11"]
     elif shape == "BM.GPU.B4.8" or shape == "BM.GPU.A100-v2.8":
         devices = ["mlx5_1", "mlx5_2", "mlx5_3", "mlx5_4", "mlx5_5", "mlx5_6", "mlx5_7", "mlx5_8", "mlx5_9", "mlx5_10", "mlx5_11", "mlx5_12", "mlx5_14", "mlx5_15", "mlx5_16", "mlx5_17"]
     elif shape == "BM.GPU4.8":
@@ -267,8 +271,12 @@ def check_rdma_link_status():
             logger.debug(f"{device}: {recommendation}")
             if "Bad signal integrity" in recommendation and float(physical_BER) < 1e-07:
                 logger.debug(f"Recommandation is {recommendation} but the Physical error are low enough that it can be ignored")
-            else : 
+            elif "Bad signal integrity" in recommendation and float(physical_BER) > 1e-07:
                 logger.debug(f"Recommandation is {recommendation} and the Physical error count is too high to be ignored: {physical_BER}")
+                link_issues.append(f"{device} - {vendor_serial_num} - {cable_fw_version} - {nic_fw_version}: {recommendation}")
+                status = False
+            else : 
+                logger.debug(f"Recommandation is {recommendation}")
                 link_issues.append(f"{device} - {vendor_serial_num} - {cable_fw_version} - {nic_fw_version}: {recommendation}")
                 status = False
         else:
@@ -405,7 +413,7 @@ def check_gpu_count():
             return None
 
 def check_gpu_pcie():
-    # Both A100 and H100 have x16
+    # A100, H100 and H200 have x16
     pcie_w = 16
     result = subprocess.run(['nvidia-smi', '--query-gpu=pcie.link.width.current', '--format=csv,noheader'], stdout=subprocess.PIPE)
     if result.returncode != 0:
@@ -426,7 +434,7 @@ def check_wpa_auth(metadata):
     if shape in ["BM.GPU.H100.8", "BM.GPU.B4.8", "BM.GPU.A100-v2.8", "BM.GPU4.8"]:
         interface_range = range(16)
         required_authenticated = 16
-    elif shape == "BM.GPU.MI300X.8":
+    elif shape in ["BM.GPU.H200.8", "BM.GPU.MI300X.8"]:
         interface_range = range(8)
         required_authenticated = 8 
     else:
@@ -560,7 +568,7 @@ if __name__ == '__main__':
     try:
         metadata=get_metadata()
         shape=metadata['shape']
-        if shape == "BM.GPU.H100.8" or shape == "BM.GPU.B4.8" or shape == "BM.GPU.A100-v2.8" or shape == "BM.GPU4.8":
+        if shape == "BM.GPU.H100.8" or shape == "BM.GPU.B4.8" or shape == "BM.GPU.A100-v2.8" or shape == "BM.GPU4.8" or shape == "BM.GPU.H200.8" or shape == "BM.GPU.MI300X.8":
             lft = LinkFlappingTest(time_interval=args.lf_interval)
             lft.get_rdma_link_failures()
             lft_issues = lft.process_rdma_link_flapping()
@@ -676,7 +684,11 @@ if __name__ == '__main__':
         for issue in rdma_link_issues:
             logger.error(f"{host_serial} - RDMA link issues: {issue}")
             slurm_reason("RDMA Link Error")
-            action = recommended_action(action, "LiveFix")
+            if "signal not detected" in issue:
+                logger.info("No signal detected doesn't always come from a bad cable and require a termination for investigation")
+                action = recommended_action(action, "Terminate")
+            else:
+                action = recommended_action(action, "LiveFix")
     if len(lft_issues["failures"]) > 0 or len(lft_issues["link_down"]) > 0:
         if len(lft_issues["failures"]) > 0:
             for issue in lft_issues["failures"]:
