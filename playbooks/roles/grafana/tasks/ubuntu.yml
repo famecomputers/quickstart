@@ -103,7 +103,7 @@
     ds_url: "http://localhost:9090"
   ignore_errors: yes
 
-  - name: Copy alert rules to grafana provisioning
+- name: Copy alert rules to grafana provisioning
   become: true
   copy:
     src: files/alert-rules.yaml
