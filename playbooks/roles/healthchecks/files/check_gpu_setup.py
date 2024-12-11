@@ -445,27 +445,31 @@ def check_wpa_auth(metadata):
     wpa_auth_issues = []
     current_state = "None"  # Define initial state, can be updated based on actual logic
     
+    for i in range(5):
     # Check each RDMA interface for WPA authentication status
-    for i in interface_range:
-        interface = f"rdma{i}"
-        try:
-            if not is_user_root():
-                command = ['sudo', 'wpa_cli', 'status', '-i', interface]
-            else:
-                command = ['wpa_cli', 'status', '-i', interface]
-    
-            result = subprocess.run(command, capture_output=True, text=True)
-    
-            for line in result.stdout.splitlines():
-                if "Supplicant PAE state" in line:
-                    if "AUTHENTICATED" in line:
-                        authenticated_count += 1
-                    break
-        except subprocess.CalledProcessError as e:
-            wpa_auth_issues.append(f"Error checking {interface}: {e}")
-            logger.warning(f"Error checking {interface}: {e}")
+        for i in interface_range:
+            interface = f"rdma{i}"
+            try:
+                if not is_user_root():
+                    command = ['sudo', 'wpa_cli', 'status', '-i', interface]
+                else:
+                    command = ['wpa_cli', 'status', '-i', interface]
 
-    # Determine action based on authentication result
+                result = subprocess.run(command, capture_output=True, text=True)
+
+                for line in result.stdout.splitlines():
+                    if "Supplicant PAE state" in line:
+                        if "AUTHENTICATED" in line:
+                            authenticated_count += 1
+                        break
+            except subprocess.CalledProcessError as e:
+                wpa_auth_issues.append(f"Error checking {interface}: {e}")
+                logger.warning(f"Error checking {interface}: {e}")
+        if authenticated_count >= required_authenticated:
+            break
+        else:
+            time.sleep(5)
+        # Determine action based on authentication result
     if authenticated_count < required_authenticated:
         action = "Reboot"  # Set action as needed, e.g., "Reboot" if a reset is recommended
         wpa_auth_issues.append(f"Only {authenticated_count} interfaces are AUTHENTICATED; expected at least {required_authenticated}.")
@@ -561,16 +565,26 @@ if __name__ == '__main__':
 
     datetime_str = datetime.now().strftime('%Y-%m-%d-%H%M%S')
     logger.info(f"Started GPU host setup check at: {datetime_str}")
+
+    metadata=get_metadata()
+    shape=metadata['shape']
+
     try:
         oca_version = get_oca_version()
     except Exception as e:
         logger.warning(f"Failed to get Oracle Cloud Agent version with error: {e}")
         oca_version = "Unknown"
-    try:
-        rttcc_issues = check_rttcc_status()
-    except Exception as e:
-        logger.warning(f"Failed to check RTTCC status with error: {e}")
+
+    if shape != "BM.GPU.H200.8":
+        try:
+            rttcc_issues = check_rttcc_status()
+        except Exception as e:
+            logger.warning(f"Failed to check RTTCC status with error: {e}")
+            rttcc_issues = []
+    else:
         rttcc_issues = []
+
+
 
     # Check for ECC errors
     try:
@@ -661,15 +675,18 @@ if __name__ == '__main__':
             logger.warning(f"Failed to get WPA Authentication status: {e}")
             wpa_auth_results = None
 
-    # Check for Fabric Manager Started
-    try:
-        fabric_manager_health = check_fabric_manager()
-    except Exception as e:
-        logger.warning(f"Failed to check Fabric Manager with error: {e}")
-        fabric_manager_health = True
+    if shape == "BM.GPU.H100.8" or shape == "BM.GPU.H200.8":
+        # Check for Fabric Manager Started
+        try:
+            fabric_manager_health = check_fabric_manager()
+        except Exception as e:
+            logger.warning(f"Failed to check Fabric Manager with error: {e}")
+            fabric_manager_health = True
 
-    if fabric_manager_health:
-        logger.info("Fabric Manager Running: Passed")
+        if fabric_manager_health:
+            logger.info("Fabric Manager Running: Passed")
+    else:
+        fabric_manager_health=True
     # Summarize the results
     try:
         host_serial = get_host_serial()
