@@ -192,11 +192,11 @@ def check_row_remap_errors():
             logger.debug(f"GPU: {i} - Row Remap Pending: {tmp_data[0]}")
             remap_issues.append(f"GPU: {i} Row Remap Pending: {tmp_data[0]}")
             recommended_action = "Reboot"
-        if tmp_data[1] != "0" and tmp_data[0] != "No":
+        if tmp_data[1] != "0" and tmp_data[1] != "No":
             logger.debug(f"GPU: {i} - Row Remap Failure: {tmp_data[1]}")
             #remap_issues.append(f"GPU: {i} Row Remap Failure: {tmp_data[1]}")
             recommended_action = "Terminate"
-        if tmp_data[2] != "0" and tmp_data[0] != "No":
+        if tmp_data[2] != "0" and tmp_data[2] != "No":
             logger.debug(f"GPU: {i} - Row Remap Uncorrectable: {tmp_data[2]}")
             if int(tmp_data[2]) > 512:
                 remap_issues.append(f"GPU: {i} - Row Remap Uncorrectable >512: {tmp_data[2]}")
