@@ -116,9 +116,3 @@
   ansible.builtin.service:
     name: grafana-server
     state: restarted
-
-- name: Restart ons-webhook
-  become: true
-  ansible.builtin.service:
-    name: ons-webhook
-    state: restarted

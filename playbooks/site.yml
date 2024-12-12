@@ -43,6 +43,7 @@
     - etc-hosts
     - boot-volume
     - mpivars
+    - oom-adjust
 
 - hosts: all
   become: true

@@ -32,6 +32,7 @@
     - limits
     - boot-volume
     - mpivars
+    - oom-adjust
 
 - hosts: compute_to_add
   become: true
