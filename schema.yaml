@@ -303,7 +303,7 @@ variables:
     dependsOn:
       compartmentId: ${targetCompartment}
     required: true
-    default: VM.Standard.E4.Flex
+    default: VM.Standard.E5.Flex
   controller_ocpus:
     title: "Cores"
     type: integer
@@ -629,7 +629,7 @@ variables:
   instance_pool_shape:
     title: "Shape of the Compute Nodes"
     required: true
-    default: "VM.Standard.E4.Flex"
+    default: "VM.Standard.E5.Flex"
     type: oci:core:instanceshape:name
     dependsOn:
       compartmentId: ${targetCompartment}
@@ -1485,7 +1485,7 @@ variables:
     dependsOn:
       compartmentId: ${targetCompartment}
     required: true
-    default: VM.Standard.E4.Flex
+    default: VM.Standard.E5.Flex
     visible: ${login_node}
 
   login_ocpus:
@@ -1746,7 +1746,7 @@ variables:
     dependsOn:
       compartmentId: ${targetCompartment}
     required: true
-    default: VM.Standard.E4.Flex
+    default: VM.Standard.E5.Flex
     visible: ${monitoring_node}
 
   monitoring_ocpus:
