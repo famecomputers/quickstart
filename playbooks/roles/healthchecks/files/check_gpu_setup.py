@@ -11,6 +11,7 @@ from xid_checker import XidChecker
 import platform
 import os
 import requests
+import glob
 
 def get_metadata():
     """ Make a request to metadata endpoint """
@@ -23,7 +24,7 @@ def get_metadata():
 def is_user_root():
     # Check if the user is root
     if os.geteuid() != 0:
-        logger.debug("User is root")
+        logger.debug("User is not root!")
         return False
     return True
 
@@ -513,6 +514,37 @@ def check_fabric_manager():
     fabric_manager_health= ( fabric_manager_status and fabric_manager_state )
     return fabric_manager_health
 
+def get_current_cpu_profile():
+    # List all scaling governor files for CPUs
+    cpu_governor_files = glob.glob('/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor')
+    cpu_profile_issues = []
+
+    current_action = None
+    action = None
+
+    for cpu_file in cpu_governor_files:
+        try:
+            with open(cpu_file, 'r') as f:
+                result = f.read().strip()
+            if result != 'performance':
+                cpu_id = cpu_file.split('/')[-3]
+                logger.warning(f"CPU {cpu_id} Profile is {result}, expected 'performance'.")
+                cpu_profile_issues.append(f"CPU {cpu_id}: {result}")
+                current_action = action
+                action = "LiveFix"
+        except Exception as e:
+            logger.error(f"Failed to read {cpu_file}: {e}")
+            cpu_profile_issues.append(f"Error reading {cpu_file}")
+
+    if not cpu_profile_issues:
+        logger.info("CPU Profile Check: Passed")
+    else:
+        logger.error("Some CPUs failed the profile check.")
+
+    # Call the recommended_action function
+    final_action = recommended_action(action, current_action)
+    return final_action, cpu_profile_issues
+
 def slurm_reason(message):
     global slurm_drain_reason
     global slurm_error_count
@@ -687,6 +719,14 @@ if __name__ == '__main__':
             logger.info("Fabric Manager Running: Passed")
     else:
         fabric_manager_health=True
+    
+    # Check CPU Profile is performance
+    try:
+        action, cpu_profile_issues = get_current_cpu_profile()
+    except Exception as e:
+        logger.warning(f"Failed to check CPU profile with error: {e}")
+        cpu_profile_issues = []
+
     # Summarize the results
     try:
         host_serial = get_host_serial()
@@ -783,6 +823,11 @@ if __name__ == '__main__':
         slurm_reason("Fabric Manager Error")
         action = recommended_action(action, "FabricManagerRestart")
     datetime_str = datetime.now().strftime('%Y-%m-%d-%H%M%S')
+    if  cpu_profile_issues:
+        logger.error(f"CPU Profile need to be 'performance'.")
+        for issue in cpu_profile_issues:
+            logger.error(f" - {issue}")
+        slurm_reason("CPU Profile error")
     logger.info(f"Finished GPU host setup check at: {datetime_str}")
     if action == "Reboot":
         logger.error("Recommended Action is to Force Reboot from the console or API")
