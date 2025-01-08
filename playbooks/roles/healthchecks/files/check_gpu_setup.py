@@ -541,9 +541,8 @@ def get_current_cpu_profile():
     else:
         logger.error("Some CPUs failed the profile check.")
 
-    # Call the recommended_action function
-    final_action = recommended_action(action, current_action)
-    return final_action, cpu_profile_issues
+
+    return cpu_profile_issues
 
 def slurm_reason(message):
     global slurm_drain_reason
@@ -828,6 +827,8 @@ if __name__ == '__main__':
         for issue in cpu_profile_issues:
             logger.error(f" - {issue}")
         slurm_reason("CPU Profile error")
+        action = recommended_action(action, "Reboot&LiveFix")
+    
     logger.info(f"Finished GPU host setup check at: {datetime_str}")
     if action == "Reboot":
         logger.error("Recommended Action is to Force Reboot from the console or API")
