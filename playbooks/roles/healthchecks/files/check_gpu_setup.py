@@ -519,9 +519,6 @@ def get_current_cpu_profile():
     cpu_governor_files = glob.glob('/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor')
     cpu_profile_issues = []
 
-    current_action = None
-    action = None
-
     for cpu_file in cpu_governor_files:
         try:
             with open(cpu_file, 'r') as f:
@@ -530,8 +527,6 @@ def get_current_cpu_profile():
                 cpu_id = cpu_file.split('/')[-3]
                 logger.warning(f"CPU {cpu_id} Profile is {result}, expected 'performance'.")
                 cpu_profile_issues.append(f"CPU {cpu_id}: {result}")
-                current_action = action
-                action = "LiveFix"
         except Exception as e:
             logger.error(f"Failed to read {cpu_file}: {e}")
             cpu_profile_issues.append(f"Error reading {cpu_file}")
