@@ -535,8 +535,6 @@ def get_current_cpu_profile():
         logger.info("CPU Profile Check: Passed")
     else:
         logger.error("Some CPUs failed the profile check.")
-
-
     return cpu_profile_issues
 
 def slurm_reason(message):
@@ -609,8 +607,6 @@ if __name__ == '__main__':
             rttcc_issues = []
     else:
         rttcc_issues = []
-
-
 
     # Check for ECC errors
     try:
@@ -716,7 +712,7 @@ if __name__ == '__main__':
     
     # Check CPU Profile is performance
     try:
-        action, cpu_profile_issues = get_current_cpu_profile()
+        cpu_profile_issues = get_current_cpu_profile()
     except Exception as e:
         logger.warning(f"Failed to check CPU profile with error: {e}")
         cpu_profile_issues = []
