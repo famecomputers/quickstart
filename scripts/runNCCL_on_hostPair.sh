@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hostfile containing the name of all the hosts should be passed as an argument to this script 
+# Hostfile containing the name of all the hosts should be passed as an argument to this script
 if [ $# -ne 1 ]; then
    echo "Usage: $0 <hostlist>"
    exit -1
@@ -17,7 +17,7 @@ declare all_hosts_file=$1
 declare -x ROOT_DIR=`pwd`
 
 # GPU Shape
-if [[ $(hostname) == $(head -1 ${all_hosts_file}) ]]; then
+if [[ $(hostname) -eq $(head -1 ${all_hosts_file}) ]]; then
    declare gpu_shape=`curl -sH "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/ | jq .shape`
 else
    declare gpu_hostname=$(head -1 ${all_hosts_file})
@@ -25,25 +25,18 @@ else
 fi
 
 # NCCL script path and it's parameters
-if [ ${gpu_shape} == \"BM.GPU.B4.8\" ] || [ ${gpu_shape} == \"M.GPU.A100-v2.8\" ]; then
+if [ ${gpu_shape} == \"BM.GPU.B4.8\" ] || [ ${gpu_shape} == \"BM.GPU.A100-v2.8\" ]; then
    declare nccl_script="/opt/oci-hpc/samples/gpu/nccl_run_allreduce.sh"
-   declare nccl_gpus_per_host="8"
+   declare nccl_gpus_per_hostpair="16"
    declare nccl_run_count="1"
-   # Minimum acceptable bandwidth for the shape
-   declare avg_baseline_bw="180"
+   # Minimum acceptable bandwidth for the shape to filter out unhealthy instances
+   declare avg_baseline_bw="160"
 elif [ ${gpu_shape} == \"BM.GPU.H100.8\" ]; then
    declare nccl_script="/opt/oci-hpc/samples/gpu/nccl_run_allreduce_H100_200.sh"
-   declare nccl_gpus_per_host="8"
+   declare nccl_gpus_per_hostpair="16"
    declare nccl_run_count="1"
-   # Minimum acceptable bandwidth for the shape
-   declare avg_baseline_bw="180"
-elif [ ${gpu_shape} == \"VM.GPU.A10.2\" ]; then
-   #declare nccl_script="/opt/oci-hpc/samples/gpu/nccl_run_allreduce.sh"
-   declare nccl_script="${ROOT_DIR}/nccl_run_allreduce_a10.sh"
-   declare nccl_gpus_per_host="2"
-   declare nccl_run_count="1"
-   # Minimum acceptable bandwidth for the shape
-   declare avg_baseline_bw="25"
+   # Minimum acceptable bandwidth for the shape to filter out unhealthy instances
+   declare avg_baseline_bw="370"
 fi
 
 # NCCL log file name
@@ -121,7 +114,7 @@ function createHostPairFile() {
 
         while IFS= read -r line; do
            ssh -o ConnectTimeout=5 $line "exit" < /dev/null
-           if [[ "$?" != "0" ]]; then
+           if [[ "$?" -ne "0" ]]; then
               echo "Host "${line}" is unreachanble"
               echo "Either fix it, or remove it from the list of host file"
               kill -s TERM ${TOP_PID}
@@ -162,11 +155,11 @@ function run_nccl_script() {
 
         if [ "$2" == "test" ]; then
            echo "Run Dir: $(realpath ${rundir})"
-           timeout 120 ${nccl_script} ${nccl_run_count} ${host_file_name} ${nccl_gpus_per_host} &
+           timeout 120 ${nccl_script} ${nccl_run_count} ${host_file_name} ${nccl_gpus_per_hostpair} &
            sleep 1
         elif [ "$2" == "retest" ]; then
            echo "Run Dir: $(realpath ${rundir})"
-           timeout 120 ${nccl_script} ${nccl_run_count} ${host_file_name} ${nccl_gpus_per_host}
+           timeout 120 ${nccl_script} ${nccl_run_count} ${host_file_name} ${nccl_gpus_per_hostpair}
         fi
 
         cd ${ROOT_DIR}
@@ -190,13 +183,13 @@ function run_nccl_script() {
         if [ "$2" == "test" ]; then
            if [[ "${rounded_bw}" -lt "${avg_baseline_bw}" ]] || [[ -z "${reported_bw}" ]]; then
               $(${cat_exe} ${rdir}/${host_file_name} >> ${ROOT_DIR}/${unknownStatus_hosts})
-           elif [[ "${rounded_bw}" -gt "${avg_baseline_bw}" ]]; then
+           elif [[ "${rounded_bw}" -ge "${avg_baseline_bw}" ]]; then
               $(${cat_exe} ${rdir}/${host_file_name} >> ${ROOT_DIR}/${healthy_host_file})
            fi
         elif [ "$2" == "retest" ]; then
            if [[ "${rounded_bw}" -lt "${avg_baseline_bw}" ]] || [[ -z "${reported_bw}" ]]; then
                    echo "$(tail -1 ${rdir}/${host_file_name}), BW: ${reported_bw}" >> ${ROOT_DIR}/${unhealthy_host_file}
-           elif [[ "${rounded_bw}" -gt "${avg_baseline_bw}" ]]; then
+           elif [[ "${rounded_bw}" -ge "${avg_baseline_bw}" ]]; then
               tail -1 ${rdir}/${host_file_name} >> ${ROOT_DIR}/${healthy_host_file}
            fi
         fi
@@ -213,7 +206,7 @@ function printSummary() {
         fi
 
         if [[ -f $2 ]]; then
-                echo "List of bad hosts:"
+                echo "List of hosts with bandwidth below the defined baseline:"
                 echo ""
                 ${cat_exe} $2
                 echo ""
@@ -240,15 +233,18 @@ if [[ ${total_host_count} -lt 2 ]]; then
    echo "Please check the hostfile."
    echo "It should contain atleast two distinct host entries"
    exit "1"
-elif [[ ${even_count_check} != 0 ]]; then
-   ${mv_exe} ${all_hosts_file} ${all_hosts_file}.tmp
-   head -n $((${total_host_count} -1)) ${all_hosts_file}.tmp > ${all_hosts_file}
-   tail -n -1 ${all_hosts_file}.tmp > ${unknownStatus_hosts}
-   ${rm_exe} ${all_hosts_file}.tmp
+elif [[ ${even_count_check} -ne 0 ]]; then
+   ${mv_exe} ${all_hosts_file} ${all_hosts_file}.$$
+   head -n $((${total_host_count} -1)) ${all_hosts_file}.$$ > ${all_hosts_file}
+   tail -n -1 ${all_hosts_file}.$$ > ${unknownStatus_hosts}
+   # Create host pair files
+   createHostPairFile $all_hosts_file
+   # Revert the hostfile back to original state if it's temporary copy was created to handle odd entries
+   ${mv_exe} ${all_hosts_file}.$$ ${all_hosts_file}
+elif [[ ${even_count_check} -eq 0 ]]; then
+   # Create host pair files
+   createHostPairFile $all_hosts_file
 fi
-
-# Create host pair files
-createHostPairFile $all_hosts_file
 
 # Get the list of host pair files
 declare -a host_pair_files=$(ls -l ${hostpair_file_prefix}* | awk '{print $9}')
@@ -291,4 +287,3 @@ fi
 
 # Print Summary
 printSummary ${healthy_host_file} ${unhealthy_host_file}
-
