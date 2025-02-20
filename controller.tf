@@ -464,7 +464,8 @@ resource "null_resource" "cluster" {
       access_ctrl                         = var.access_ctrl,
       numa_nodes_per_socket               = var.numa_nodes_per_socket,
       percentage_of_cores_enabled         = var.percentage_of_cores_enabled,
-      healthchecks                        = var.healthchecks
+      healthchecks                        = var.healthchecks,
+      ons_topic_ocid                      = oci_ons_notification_topic.grafana_alerts.id
     })
 
     destination = "/opt/oci-hpc/conf/variables.tf"
@@ -593,5 +594,3 @@ resource "oci_dns_rrset" "rrset-controller" {
   scope   = "PRIVATE"
   view_id = data.oci_dns_views.dns_views.views[0].id
 }
-
-#oci dns record rrset update --zone-name-or-id ocid1.dns-zone.oc1.ca-toronto-1.aaaaaaaadwpfuij3w7jpg3sj6gzc5ete2yeknrmjgwzvs6qytgkqad2vhbmq --domain mint-ocelot-controller.mint-ocelot.local --rtype A --auth instance_principal --scope PRIVATE --view-id  ocid1.dnsview.oc1.ca-toronto-1.aaaaaaaamhhzrbwe4f3rx5i2hx2xlnubfjc37uvy3e7bjrbyaln5o7zjfvpa --items '[{ "rdata":"1.1.1.1","ttl":300,"domain":"mint-ocelot-controller.mint-ocelot.local","rtype":"A"}]' --force
