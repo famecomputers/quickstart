@@ -1,22 +1,42 @@
 #!/bin/bash
-#SBATCH --job-name=nccl-allreduce-slurm-containers
+#SBATCH --job-name=nccl-container
 #SBATCH --nodes=2
 #SBATCH --gpus-per-node=8
 #SBATCH --ntasks-per-node=8
 #SBATCH --exclusive
-export PMI_DEBUG=1
 
-cd /nfs/cluster
-mkdir $SLURM_JOB_ID
-cd $SLURM_JOB_ID
+# This script defaults to running all_reduce_perf, but can run other NCCL tests if launched with
+# EXEC=all_gather_perf sbatch -N8 ./nccl_run_allreduce_containers_H100_H200.sbatch
 
-MACHINEFILE="hostfile"
+#Here is an example of how you might build the NCCL tests inside of a pytorch container for use with this script:
+#
+##!/bin/bash
+##SBATCH --output=%x.%J.%N.out
+#
+#export VERSION=24.11
+#CONT="/nfs/cluster/sce/ngc/pytorch_$VERSION.sqsh"
+#MOUNT="/nfs/cluster/sce/nccl:/nccl,/nfs/cluster/sce/mpi/hpcx-v2.22-gcc-doca_ofed-ubuntu22.04-cuda12-x86_64:/mpi/hpcx"
+#
+#srun --ntasks=$SLURM_JOB_NUM_NODES \
+#    --container-image "${CONT}" \
+#    --container-name=nccl \
+#    --container-mounts="${MOUNT}" \
+#    --ntasks-per-node=1 \
+#    bash -c 'cd /nccl && git clone https://github.com/NVIDIA/nccl-tests.git && source /mpi/hpcx/hpcx-init.sh && hpcx_load && cd nccl-tests && make MPI=1 && mv ../nccl-tests ../nccl-tests-${VERSION}'
+#
 
-scontrol show hostnames $SLURM_JOB_NODELIST > $MACHINEFILE
-echo MACHINEFILE
-cat $MACHINEFILE
 
-source /etc/os-release
+# Set to the pytorch container version you want to use
+export PYTORCH_VERSION=24.11
+
+# Set to where the pytorch container .sqsh can be found
+IMAGE_PATH="/nfs/cluster/sce/ngc/"
+
+# Assuming the nccl_tests to run inside of the container are located outside of the container, specify their location here
+NCCL_TEST_PATH="/nfs/cluster/sce/nccl/nccl-tests-${PYTORCH_VERSION}"
+
+# Set to the path to the test executables within the container, imacted by mount point chosen for NCCL_TEST_PATH in CONTAINER_MOUNTS below
+NCCL_TEST_CONTAINER_PATH="/nccl/build/"
 
 MPIVARS_PATH=`ls /usr/mpi/gcc/openmpi-*/bin/mpivars.sh`
 
@@ -30,7 +50,51 @@ if [[ "$MPIVARS_PATH" == "" ]]; then
 source $MPIVARS_PATH
 LOCAL_MPI=${MPIVARS_PATH%/*}
 
+CONTAINER_IMAGE="${IMAGE_PATH}/pytorch_${PYTORCH_VERSION}.sqsh"
+CONTAINER_MOUNTS="${NCCL_TEST_PATH}:/nccl,$LOCAL_MPI:$LOCAL_MPI,/nfs/cluster:/nfs/cluster"
+
+if [[ -z "${EXEC}" ]]; then
+  export EXEC_CMD="${NCCL_TEST_CONTAINER_PATH}/all_reduce_perf"
+else
+  export EXEC_CMD="${NCCL_TEST_CONTAINER_PATH}/${EXEC}"
+fi
+
+cd /nfs/cluster/
+mkdir $SLURM_JOB_ID
+cd $SLURM_JOB_ID
+
+MACHINEFILE="hostfile"
+ORDEREDMACHINEFILE="ordered_hostfile_system_name"
+ORDEREDMACHINEFILENTIMES="ordered_hostfile_system_name_n_times"
+ORDEREDRANKMACHINEFILE="rankfile_system_name"
+NODE_SWITCH_LIST="node_switch_list"
+
+scontrol show hostnames $SLURM_JOB_NODELIST > $MACHINEFILE
+
+source /etc/os-release
+if [ $ID == "ol" ] || [ $ID == "centos" ] ; then
+    python3 /home/opc/node_ordering_by_rack.py --input_file $MACHINEFILE > /dev/null
+elif [ $ID == "debian" ] || [ $ID == "ubuntu" ] ; then
+    python3 /home/ubuntu/node_ordering_by_rack.py --input_file $MACHINEFILE > /dev/null
+fi
+
+
+for node in $(cat $ORDEREDMACHINEFILE) ; do
+        for x in $(seq 1 $SLURM_NTASKS_PER_NODE) ; do
+                echo $node >> $ORDEREDMACHINEFILENTIMES
+        done
+done
+
+export PMI_DEBUG=1
+
+echo ORDEREDMACHINEFILENTIMES
+cat $ORDEREDMACHINEFILENTIMES
+echo NODE_SWITCH_LIST
+cat $NODE_SWITCH_LIST
+
+
 shape=`curl -sH "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/ | jq .shape`
+
 if [ $shape == \"BM.GPU.H100.8\" ]
 then
   var_UCX_NET_DEVICES=eth0
@@ -43,36 +107,29 @@ else
   echo "Use the appropriate nccl test run script for non H100/H200 nodes"
 fi
 
-export NCCL_CROSS_NIC=0 \
-       NCCL_SOCKET_NTHREADS=16 \
-       NCCL_DEBUG=WARN \
-       NCCL_CUMEM_ENABLE=0 \
-       NCCL_IB_SPLIT_DATA_ON_QPS=0 \
-       NCCL_IB_QPS_PER_CONNECTION=16 \
-       NCCL_IB_GID_INDEX=3 \
-       NCCL_IB_TC=41 \
-       NCCL_IB_SL=0 \
+export RX_QUEUE_LEN=8192 \
+       IB_RX_QUEUE_LEN=8192 \
        NCCL_IB_TIMEOUT=22 \
-       NCCL_NET_PLUGIN=none \
-       NCCL_SOCKET_IFNAME=eth0 \
+       NCCL_IB_SL=0 \
+       NCCL_IB_TC=41 \
        NCCL_IGNORE_CPU_AFFINITY=1 \
-       NCCL_IB_HCA="${var_NCCL_IB_HCA}" \
-       NCCL_TOPO_FILE=/nfs/cluster/H100-topology.xml \
+       NCCL_IB_GID_INDEX=3 \
+       NCCL_IB_SPLIT_DATA_ON_QPS=0 \
+       NCCL_IB_QPS_PER_CONNECTION=4 \
        HCOLL_ENABLE_MCAST_ALL=0 \
        coll_hcoll_enable=0 \
-       UCX_TLS=tcp \
        UCX_NET_DEVICES=${var_UCX_NET_DEVICES} \
-       RX_QUEUE_LEN=8192 \
-       IB_RX_QUEUE_LEN=8192 \
+       NCCL_IB_HCA="${var_NCCL_IB_HCA}" \
+       NCCL_NET_PLUGIN=none \
+       NCCL_SOCKET_IFNAME=eth0 \
+       UCX_TLS=tcp \
+       NCCL_CUMEM_ENABLE=0 \
+       NCCL_DEBUG=WARN \
        OMPI_MCA_coll=^hcoll
 
-env | grep "SLURMD_NODENAME="
-USER=`whoami`
+echo "Running ${EXEC_CMD} test on ${SLURM_NNODES} nodes using container pytorch ${PYTORCH_VERSION}"
 
-CONTAINER_IMAGE="/home/ubuntu/nvcr.io+nvidia+pytorch+24.01-py3.sqsh"
-CONTAINER_MOUNTS="/opt/oci-hpc/nccl-test:/nccl,$LOCAL_MPI:$LOCAL_MPI,/nfs/cluster:/nfs/cluster"
-echo $LOCAL_MPI
-echo $MPIVARS_PATH
+export SLURM_HOSTFILE=$ORDEREDMACHINEFILENTIMES
 
 srun --mpi=pmi2 --gpus-per-node=$SBATCH_GPUS_PER_NODE \
      --ntasks-per-node=$SLURM_NTASKS_PER_NODE \
@@ -80,5 +137,5 @@ srun --mpi=pmi2 --gpus-per-node=$SBATCH_GPUS_PER_NODE \
      --container-mounts=$CONTAINER_MOUNTS \
      bash -c "
      source $MPIVARS_PATH &&
-     /nccl/build/all_reduce_perf -b 1G -e 16G -f 2 -g 1
+     ${EXEC_CMD} -b 1G -e 16G -f 2 -g 1 -n 50
      "
