@@ -7,7 +7,7 @@
 export PMI_DEBUG=1
 
 # This script defaults to running all_reduce_perf, but can run other NCCL tests if launched with
-# EXEC=all_gather_perf sbatch -N8 ./nccl_run_allreduce_H100_H200.sbatch
+# EXEC=all_gather_perf sbatch -N8 ./nccl_run_allreduce_H100_200.sbatch
 
 if [[ -z "${EXEC}" ]]; then
   export EXEC_CMD="/opt/oci-hpc/nccl-test/build/all_reduce_perf"
