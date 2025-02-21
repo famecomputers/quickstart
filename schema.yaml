@@ -36,6 +36,13 @@ variableGroups:
       - ${controller_boot_volume_size}
       - ${controller_boot_volume_backup}
       - ${controller_object_storage_par}
+      - ${use_marketplace_image_controller}
+      - ${marketplace_listing_controller}
+      - ${unsupported_controller}
+      - ${controller_image_compartment}
+      - ${custom_controller_image}
+      - ${unsupported_controller_image}
+      - ${controller_username}
   - title: "Compute node options"
     variables:
       - ${use_multiple_ads}
@@ -145,15 +152,6 @@ variableGroups:
       - ${nfs_options}
       - ${fss_compartment}
       - ${fss_ad}
-  - title: "Advanced controller options"
-    variables:
-      - ${use_marketplace_image_controller}
-      - ${marketplace_listing_controller}
-      - ${unsupported_controller}
-      - ${controller_image_compartment}
-      - ${custom_controller_image}
-      - ${unsupported_controller_image}
-      - ${controller_username}
   - title: "Advanced storage options"
     variables:
       - ${use_advanced}
@@ -1046,7 +1044,7 @@ variables:
   vcn_compartment:
     title: "VCN compartment"
     type: oci:identity:compartment:id
-    visible: ${use_existing_vcn}
+    visible: true
     default: ${targetCompartment}
     required: true
   vcn_id:
@@ -1166,7 +1164,7 @@ variables:
   pyxis:
     type: boolean
     title: "Install Nvidia Pyxis plugin for Slurm"
-    default: false
+    default: true
     description: "Install Pyxis. Pyxis is a plugin that integrates Enroot with Slurm. (Warning: using Pyxis with autoscaling is causing an issue that prevents jobs from being scheduled on nodes to be spun up)"
     visible:
       and:
@@ -1199,7 +1197,7 @@ variables:
   enroot:
     type: boolean
     title: "Install Nvidia Enroot for containerized GPU workloads"
-    default: false
+    default: true
     description: "Install Enroot, Nvidia Container Toolkit, and docker."
     visible: ${slurm}
 
@@ -1361,7 +1359,7 @@ variables:
   nfs_target_path:
     type: string
     title: "NFS Path"
-    default: "/app"
+    default: "/fss"
     description: "Value of the path on which you can mount the drive"
     visible: 
       and:
@@ -1381,7 +1379,7 @@ variables:
   nfs_source_path:
     type: string
     title: "NFS server Path"
-    default: "/app"
+    default: "/fss"
     description: "Value of the path on the NFS server"
     visible: ${add_nfs}
     required: true

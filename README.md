@@ -27,7 +27,9 @@ Allow dynamic-group instance_principal to manage dns in compartment compartmentN
 ```
 or:
 
-`Allow dynamic-group instance_principal to manage all-resources in compartment compartmentName`
+```
+Allow dynamic-group instance_principal to manage all-resources in compartment compartmentName
+```
 
 
 ## Supported OS: 

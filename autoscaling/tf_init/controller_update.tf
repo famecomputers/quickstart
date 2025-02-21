@@ -33,6 +33,7 @@ resource "local_file" "inventory" {
     rdma_netmask = cidrnetmask(var.rdma_subnet),
     zone_name = var.zone_name,
     dns_entries = var.dns_entries,
+    vcn_compartment = var.vcn_compartment,
     nfs = var.use_scratch_nfs ? local.cluster_instances_names[0] : "",
     scratch_nfs = var.use_scratch_nfs,
     cluster_nfs = var.use_cluster_nfs,

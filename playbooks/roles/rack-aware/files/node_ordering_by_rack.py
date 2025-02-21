@@ -30,7 +30,7 @@ def write_ordered_rankfile(ordered_hosts=[],hostfile=None):
 
 def get_swicthname(host):
     try:
-        command = "scontrol show topology "+host
+        command = "scontrol show topology "+host+" | grep Level=0"
         result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         switchname=result.stdout.split(" ")[0].replace("SwitchName=","")
         return switchname
@@ -123,18 +123,20 @@ ordered_hosts_friendly_name = []
 # sort racks by amount of hosts (descending)
 racks_sorted = sorted(r.items(), key=lambda x: len(x[1]), reverse=True)
 i = 0
+fhandler = open("node_switch_list","w")
 for k, v in racks_sorted:
   i += 1
   print(f'# rack {i}')
   rack_data_prefix = "SwitchName=rack"+str(i)+" Nodes="
   rack_nodes = []
   for h in v:
+    fhandler.write("Node "+h+" from switch number "+str(i)+"\n")
     print(h)
     ordered_hosts.append(h)
     ordered_hosts_friendly_name.append(friendly_name_to_system_hostname[h])
     rack_nodes.append(friendly_name_to_system_hostname[h])
   rack_data = rack_data_prefix + ','.join([str(node) for node in rack_nodes])
-
+fhandler.close()
 hostfile="ordered_hostfile"
 write_ordered_hostfile(ordered_hosts,hostfile)
 hostfile="ordered_hostfile_system_name"

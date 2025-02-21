@@ -12,12 +12,28 @@ mkdir $SLURM_JOB_ID
 cd $SLURM_JOB_ID
 
 MACHINEFILE="hostfile"
+ORDEREDMACHINEFILE="ordered_hostfile_system_name"
+ORDEREDRANKMACHINEFILE="rankfile_system_name"
+NODE_SWITCH_LIST="node_switch_list" 
 
 scontrol show hostnames $SLURM_JOB_NODELIST > $MACHINEFILE
 echo MACHINEFILE
 cat $MACHINEFILE
 
 source /etc/os-release
+if [ $ID == "ol" ] || [ $ID == "centos" ] ; then
+    python3 /home/opc/node_ordering_by_rack.py --input_file $MACHINEFILE > /dev/null
+elif [ $ID == "debian" ] || [ $ID == "ubuntu" ] ; then
+    python3 /home/ubuntu/node_ordering_by_rack.py --input_file $MACHINEFILE > /dev/null
+fi
+
+
+echo ORDEREDMACHINEFILE
+cat $ORDEREDMACHINEFILE
+echo ORDEREDRANKMACHINEFILE
+cat $ORDEREDRANKMACHINEFILE
+echo NODE_SWITCH_LIST
+cat $NODE_SWITCH_LIST
 
 mpivars_path=`ls /usr/mpi/gcc/openmpi-*/bin/mpivars.sh`
 
@@ -29,7 +45,7 @@ if [[ "$mpivars_path" == "" ]]; then
     echo "Could not find MPIPATH"; exit; fi
 
 source $mpivars_path
-
+export NCCL_DEBUG=WARN
 shape=`curl -sH "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/ | jq .shape`
 if [ $shape == \"BM.GPU.H100.8\" ]
 then

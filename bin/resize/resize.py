@@ -74,6 +74,11 @@ for inv_vars in inventory_dict["all:vars"]:
     if inv_vars.startswith("dns_entries"):
         dns_entries=(inv_vars.split("dns_entries=")[1].strip().lower() == "true")
         break
+vcn_compartment=comp_ocid
+for inv_vars in inventory_dict["all:vars"]:
+    if inv_vars.startswith("vcn_compartment"):
+        vcn_compartment=inv_vars.split("vcn_compartment=")[1].strip()
+        break
 hostname_convention=None
 for inv_vars in inventory_dict["all:vars"]:
     if inv_vars.startswith("hostname_convention"):
@@ -166,7 +171,7 @@ else:
     inventory_instances =[]
     only_inventory_instance=[]
     if dns_entries:
-        zone_id=ocicore.dns_client.list_zones(compartment_id=comp_ocid,name=zone_name,zone_type="PRIMARY",scope="PRIVATE").data[0].id
+        zone_id=ocicore.dns_client.list_zones(compartment_id=vcn_compartment,name=zone_name,zone_type="PRIMARY",scope="PRIVATE").data[0].id
     for line in inventory_dict['compute_configured']:
         host=line.split('ansible_host=')[0].strip()
         ip=line.split("ansible_host=")[1].split("ansible_user=")[0].strip()

@@ -481,7 +481,7 @@ variable "fss_ad" {
   type = string
   }
 variable "nfs_target_path" { 
-  default = "/app"
+  default = "/fss"
   type = string
   }
 variable "nfs_source_IP" { 
@@ -493,7 +493,7 @@ variable "nfs_list_of_mount_target_IPs" {
   type = string
   }
 variable "nfs_source_path" { 
-  default = "/app"
+  default = "/fss"
   type = string
   }
 variable "nfs_options" { 
