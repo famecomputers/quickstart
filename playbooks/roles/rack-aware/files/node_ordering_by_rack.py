@@ -145,4 +145,3 @@ hostfile="ordered_hostfile_system_name_srun"
 write_ordered_hostfile(ordered_hosts_friendly_name,hostfile,True)
 rankfile="rankfile_system_name"
 write_ordered_rankfile(ordered_hosts_friendly_name,rankfile)
-
