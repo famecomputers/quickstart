@@ -164,5 +164,5 @@ variable "hostname_convention" {
   default = "##HOST_CONV##"
 }
 variable "ons_topic_ocid" {
-  default = ${ons_topic_ocid}
+  default = "${ons_topic_ocid}"
 }
