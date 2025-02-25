@@ -61,5 +61,5 @@ pmix_download_packages:
   - "pmix-devel-3.2.4-1.el{{ansible_distribution_major_version}}.x86_64.rpm"
 
 pmix_packages:
-  - "{{ download_path }}/slurm_rpms/pmix-3.2.5-1.el{{ansible_distribution_major_version}}.x86_64.rpm"
-  - "{{ download_path }}/slurm_rpms/pmix-devel-3.2.5-1.el{{ansible_distribution_major_version}}.x86_64.rpm"
+  - "{{ download_path }}/slurm_rpms/pmix-3.2.4-1.el{{ansible_distribution_major_version}}.x86_64.rpm"
+  - "{{ download_path }}/slurm_rpms/pmix-devel-3.2.4-1.el{{ansible_distribution_major_version}}.x86_64.rpm"
