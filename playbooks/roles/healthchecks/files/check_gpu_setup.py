@@ -13,6 +13,7 @@ import os
 import requests
 import glob
 import json
+import time
 
 def get_metadata():
     """ Make a request to metadata endpoint """
