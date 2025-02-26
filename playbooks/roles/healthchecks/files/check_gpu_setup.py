@@ -113,8 +113,8 @@ def check_rttcc_status():
         command = [c for c in command if c]  # Remove empty elements
 
         try:
-            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            output = result.stdout.split("\n")
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = result.stdout.decode('utf-8').split("\n")
 
             for line in output:
                 if line.startswith("value"):
@@ -177,10 +177,10 @@ def check_ecc_errors():
         try:
             THRESHOLD = 5
             # Try detecting AMD GPU
-            result = subprocess.run(["amd-smi", "metric", "--ecc", "--json"], capture_output=True, text=True, check=True)
+            result = subprocess.run(["amd-smi", "metric", "--ecc", "--json"], capture_output=True, check=True)
 
             # Parse JSON output
-            gpu_data = json.loads(result.stdout)
+            gpu_data = json.loads(result.stdout.decode('utf-8'))
             for gpu in gpu_data:
                 if gpu["ecc"]["total_uncorrectable_count"] > THRESHOLD:
                     ecc_issues.append(f"GPU {gpu['gpu']} - ECC Errors: {gpu['ecc']['total_uncorrectable_count']}")
@@ -467,13 +467,13 @@ def check_gpu_pcie():
     if shape == "BM.GPU.MI300X.8":
         try:
             # Run amd-smi for AMD GPUs
-            result = subprocess.run(['amd-smi', 'metric', '--pcie'], stdout=subprocess.PIPE, text=True, check=True)
+            result = subprocess.run(['amd-smi', 'metric', '--pcie'], stdout=subprocess.PIPE, check=True)
 
             if result.returncode != 0:
                 logger.warning("GPU PCIe Width Test: Command amd-smi failed")
                 return None
             else:
-                output = result.stdout
+                output = result.stdout.decode('utf-8')
 
                 # Extract PCIe WIDTH values correctly
                 pcie_widths = re.findall(r'^\s*WIDTH:\s*(\d+)', output, re.MULTILINE)
@@ -494,14 +494,14 @@ def check_gpu_pcie():
             # Run nvidia-smi for NVIDIA GPUs
             result = subprocess.run(
                 ['nvidia-smi', '--query-gpu=pcie.link.width.current', '--format=csv,noheader'],
-                stdout=subprocess.PIPE, text=True, check=True
+                stdout=subprocess.PIPE, check=True
             )
 
             if result.returncode != 0:
                 logger.warning("GPU PCIe Width Test: Command nvidia-smi failed")
                 return None
 
-            output = result.stdout.strip()
+            output = result.stdout.decode('utf-8').strip()
             widths = list(map(int, output.split("\n")))
 
             if all(width == expected_pcie_width for width in widths):
@@ -543,9 +543,9 @@ def check_wpa_auth(metadata):
                 else:
                     command = ['wpa_cli', 'status', '-i', interface]
 
-                result = subprocess.run(command, capture_output=True, text=True)
+                result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                for line in result.stdout.splitlines():
+                for line in result.stdout.decode('utf-8').splitlines():
                     if "Supplicant PAE state" in line:
                         if "AUTHENTICATED" in line:
                             authenticated_count += 1
@@ -625,8 +625,8 @@ def get_current_cpu_profile():
 
 def check_bad_pages():
     try:
-        result = subprocess.run(["amd-smi", "bad-pages", "--json"], capture_output=True, text=True, check=True)
-        data = json.loads(result.stdout)
+        result = subprocess.run(["amd-smi", "bad-pages", "--json"], capture_output=True, check=True)
+        data = json.loads(result.stdout.decode('utf-8'))
     except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
         print(f"Error executing amd-smi or parsing JSON: {e}")
         return
