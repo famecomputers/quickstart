@@ -1,11 +1,24 @@
 #!/bin/bash
-#SBATCH --job-name=nccl-allreduce-slurm
+#SBATCH --job-name=nccl
 #SBATCH --nodes=2
 #SBATCH --gpus-per-node=8
 #SBATCH --ntasks-per-node=8
 #SBATCH --exclusive
 export PMI_DEBUG=1
 
+# This script defaults to running all_reduce_perf, but can run other NCCL tests if launched with
+# EXEC=all_gather_perf sbatch -N8 ./nccl_run_allreduce_H100_200.sbatch
+
+if [[ -z "${EXEC}" ]]; then
+  export EXEC_CMD="/opt/oci-hpc/nccl-test/build/all_reduce_perf"
+else
+  export EXEC_CMD="/opt/oci-hpc/nccl-test/build/${EXEC}"
+fi
+
+if [ ! -f ${EXEC_CMD} ]; then
+    echo "Test executable ${EXEC_CMD} not found!"
+    exit 1
+fi
 
 cd /nfs/cluster
 mkdir $SLURM_JOB_ID
@@ -14,7 +27,7 @@ cd $SLURM_JOB_ID
 MACHINEFILE="hostfile"
 ORDEREDMACHINEFILE="ordered_hostfile_system_name"
 ORDEREDRANKMACHINEFILE="rankfile_system_name"
-NODE_SWITCH_LIST="node_switch_list" 
+NODE_SWITCH_LIST="node_switch_list"
 
 scontrol show hostnames $SLURM_JOB_NODELIST > $MACHINEFILE
 echo MACHINEFILE
@@ -28,8 +41,6 @@ elif [ $ID == "debian" ] || [ $ID == "ubuntu" ] ; then
 fi
 
 
-echo ORDEREDMACHINEFILE
-cat $ORDEREDMACHINEFILE
 echo ORDEREDRANKMACHINEFILE
 cat $ORDEREDRANKMACHINEFILE
 echo NODE_SWITCH_LIST
@@ -45,7 +56,10 @@ if [[ "$mpivars_path" == "" ]]; then
     echo "Could not find MPIPATH"; exit; fi
 
 source $mpivars_path
+
 export NCCL_DEBUG=WARN
+
+
 shape=`curl -sH "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/ | jq .shape`
 if [ $shape == \"BM.GPU.H100.8\" ]
 then
@@ -59,15 +73,16 @@ else
   echo "Use the appropriate nccl test run script for non H100/H200 nodes"
 fi
 
-  mpirun --mca pml ucx \
+echo "Running ${EXEC_CMD} test on ${SLURM_NNODES} nodes"
+
+
+mpirun --mca pml ucx \
   --bind-to numa \
-  -npernode 8 \
   --mca coll ^hcoll \
-  -x NCCL_CROSS_NIC=2 \
   -x NCCL_DEBUG=WARN \
   -x NCCL_CUMEM_ENABLE=0 \
   -x NCCL_IB_SPLIT_DATA_ON_QPS=0 \
-  -x NCCL_IB_QPS_PER_CONNECTION=1 \
+  -x NCCL_IB_QPS_PER_CONNECTION=4 \
   -x NCCL_IB_GID_INDEX=3 \
   -x NCCL_IB_TC=41 \
   -x NCCL_IB_SL=0 \
@@ -82,14 +97,4 @@ fi
   -x NCCL_SOCKET_IFNAME=${var_UCX_NET_DEVICES} \
   -x NCCL_IGNORE_CPU_AFFINITY=1 \
   -x NCCL_IB_HCA="${var_NCCL_IB_HCA}" \
-  --np $((SLURM_NNODES*SLURM_NTASKS_PER_NODE)) --hostfile $MACHINEFILE  /opt/oci-hpc/nccl-test/build/all_reduce_perf -b 1G -e 16G -f 2 -g 1
-
-  # If NCCL version is lower than 2.20.3, it is recommended to use the topology filefor optimal performances 
-  # -x NCCL_TOPO_FILE=~/H100-topology.xml \
-
-  # If NCCL version is lower than 2.20.3, it is recommended to use 
-  # -x NCCL_CROSS_NIC=0 for multiple subnets and large scale jobs (>16 nodes)
-  # -x NCCL_CROSS_NIC=1 for single subnets and small scale jobs (<16 nodes)
-  
-  # If NCCL version is higher than 2.20.3, the absolute max NCCL throughput at large message size will be obtained with
-  # -x NCCL_MIN_NCHANNELS=32 \ But it does take some processing power away from the GPU for networking gains and is not recommended while running jobs. 
+  --np $((SLURM_NNODES*SLURM_NTASKS_PER_NODE)) --rankfile $ORDEREDRANKMACHINEFILE ${EXEC_CMD} -b 1G -e 16G -f 2 -g 1 -n 50
