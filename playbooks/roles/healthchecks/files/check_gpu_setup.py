@@ -532,7 +532,9 @@ def check_wpa_auth(metadata):
     authenticated_count = 0 
     wpa_auth_issues = []
     current_state = "None"  # Define initial state, can be updated based on actual logic
-    
+    interface_names=["rdma"+str(i) for i in interface_range]
+    auth_status={key: 0 for key in interface_names}
+    warning={key: [] for key in interface_names}
     for i in range(5):
     # Check each RDMA interface for WPA authentication status
         for i in interface_range:
@@ -544,15 +546,17 @@ def check_wpa_auth(metadata):
                     command = ['wpa_cli', 'status', '-i', interface]
 
                 result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+                if result.stderr.decode('utf-8') != '':
+                    warning[interface]=result.stderr.decode('utf-8').rstrip("\n")
                 for line in result.stdout.decode('utf-8').splitlines():
                     if "Supplicant PAE state" in line:
                         if "AUTHENTICATED" in line:
-                            authenticated_count += 1
+                            auth_status[interface]=1
                         break
             except subprocess.CalledProcessError as e:
                 wpa_auth_issues.append(f"Error checking {interface}: {e}")
                 logger.warning(f"Error checking {interface}: {e}")
+        authenticated_count=sum(auth_status.values())
         if authenticated_count >= required_authenticated:
             break
         else:
@@ -561,6 +565,9 @@ def check_wpa_auth(metadata):
     if authenticated_count < required_authenticated:
         action = "Reboot"  # Set action as needed, e.g., "Reboot" if a reset is recommended
         wpa_auth_issues.append(f"Only {authenticated_count} interfaces are AUTHENTICATED; expected at least {required_authenticated}.")
+        for i in warning.keys():
+            if auth_status[i]==0:
+                logger.warning(warning[i])
         logger.error("WPA Authentication Check: Failed")
     else:
         action = None  # No action if check passes
