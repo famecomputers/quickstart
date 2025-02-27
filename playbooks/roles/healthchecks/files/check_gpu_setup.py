@@ -537,8 +537,7 @@ def check_wpa_auth(metadata):
     warning={key: [] for key in interface_names}
     for i in range(5):
     # Check each RDMA interface for WPA authentication status
-        for i in interface_range:
-            interface = f"rdma{i}"
+        for interface in interface_names:
             try:
                 if not is_user_root():
                     command = ['sudo', 'wpa_cli', 'status', '-i', interface]
