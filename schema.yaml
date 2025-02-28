@@ -104,6 +104,7 @@ variableGroups:
   - title: "Cluster Monitoring"
     variables:
       - ${cluster_monitoring}
+      - ${alerting}
       - ${monitoring_node}
       - ${monitoring_ad}
       - ${monitoring_shape}
