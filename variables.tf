@@ -340,10 +340,10 @@ variable "marketplace_listing" {
 variable "marketplace_version_id" {
   type = map(string)
   default = {
-    "HPC_OL8"       = "OracleLinux-8-OCA-RHCK-OFED-23.10-2.1.3.1-2024.09.18-0"
-    "GPU_OL8_NV560" = "OracleLinux-8-OCA-RHCK-OFED-23.10-2.1.3.1-GPU-560-CUDA-12.6-2024.09.18-0"
-    "GPU_OL8_NV550" = "OracleLinux-8-OCA-RHCK-OFED-23.10-2.1.3.1-GPU-550-CUDA-12.4-2024.09.18-0"
-    "GPU_OL8_NV535" = "OracleLinux-8-OCA-RHCK-OFED-23.10-2.1.3.1-GPU-535-CUDA-12.2-2024.09.18-0"
+    "HPC_OL8"       = "OracleLinux-8-2024.11.30-0-OCA-RHCK-OFED-24.10-1.1.4.0-2025.02.25-0"
+    "GPU_OL8_NV550" = "OracleLinux-8-2024.11.30-0-OCA-RHCK-OFED-24.10-1.1.4.0-GPU-550-CUDA-12.4-2025.02.25-0"
+    "GPU_OL8_NV560" = "OracleLinux-8-2024.11.30-0-OCA-RHCK-OFED-24.10-1.1.4.0-GPU-560-CUDA-12.6-2025.02.25-0"
+    "GPU_OL8_NV570" = "OracleLinux-8-2024.11.30-0-OCA-RHCK-OFED-24.10-1.1.4.0-GPU-570-CUDA-12.8-2025.02.25-0"
   }
 }
 
@@ -505,6 +505,10 @@ variable "enroot" {
   type = bool
   }
 variable "cluster_monitoring" { 
+  default = false
+  type = bool
+  }
+variable "alerting" { 
   default = false
   type = bool
   }

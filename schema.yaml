@@ -439,9 +439,9 @@ variables:
     required: true
     enum:
       - "HPC_OL8"
+      - "GPU_OL8_NV570"
       - "GPU_OL8_NV560"
       - "GPU_OL8_NV550"
-      - "GPU_OL8_NV535"
     default: "HPC_OL8"
     visible: ${use_marketplace_image_controller}
 
@@ -785,10 +785,10 @@ variables:
     required: true
     enum:
       - "HPC_OL8"
+      - "GPU_OL8_NV570"
       - "GPU_OL8_NV560"
       - "GPU_OL8_NV550"
-      - "GPU_OL8_NV535"
-    default: "GPU_OL8_NV550"
+    default: "GPU_OL8_NV570"
     visible: ${use_marketplace_image}
 
   compute_image_compartment:
@@ -1206,6 +1206,13 @@ variables:
     title: "Install HPC Cluster Monitoring Tools"
     default: false
     description: "Install Grafana, Node-Exporter, and Prometheus tools for system monitoring."
+
+  alerting:
+    type: boolean
+    title: "Install HPC Cluster alerting Tools"
+    default: false
+    description: "Creates a Topic that you can subscribe to"
+    visible: ${cluster_monitoring}
 
   pam:
     type: boolean
@@ -1708,9 +1715,9 @@ variables:
     required: true
     enum:
       - "HPC_OL8"
+      - "GPU_OL8_NV570"
       - "GPU_OL8_NV560"
       - "GPU_OL8_NV550"
-      - "GPU_OL8_NV535"
     default: "HPC_OL8"
     visible:
       and:
@@ -1938,9 +1945,9 @@ variables:
     required: true
     enum:
       - "HPC_OL8"
+      - "GPU_OL8_NV570"
       - "GPU_OL8_NV560"
       - "GPU_OL8_NV550"
-      - "GPU_OL8_NV535"
     default: "HPC_OL8"
     visible:
       and:
