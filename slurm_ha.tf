@@ -261,7 +261,7 @@ resource "null_resource" "cluster_backup" {
       hostname_convention       = var.hostname_convention,
       change_hostname           = var.change_hostname,
       hostname_convention       = var.hostname_convention,
-      ons_topic_ocid            = oci_ons_notification_topic.grafana_alerts.id
+      ons_topic_ocid            = local.topic_id
     })
 
     destination = "/opt/oci-hpc/playbooks/inventory"
@@ -420,7 +420,7 @@ resource "null_resource" "cluster_backup" {
       healthchecks                        = var.healthchecks,
       change_hostname                     = var.change_hostname,
       hostname_convention                 = var.hostname_convention,
-      ons_topic_ocid                      = oci_ons_notification_topic.grafana_alerts.id
+      ons_topic_ocid                      = local.topic_id
     })
 
     destination = "/opt/oci-hpc/conf/variables.tf"
