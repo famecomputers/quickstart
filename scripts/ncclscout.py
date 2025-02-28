@@ -19,9 +19,9 @@ import argparse
 
 # Define supported GPU shapes and their NCCL parameters
 GPU_SHAPES = {
-    "A100": {"shapes": ["BM.GPU.B4.8", "BM.GPU.A100-v2.8"], "threshold": 185.0, "script": "/opt/oci-hpc/samples/gpu/nccl_run_allreduce.sh"},
-    "H100": {"shapes": ["BM.GPU.H100.8"], "threshold": 365.0, "script": "/opt/oci-hpc/samples/gpu/nccl_run_allreduce_H100_200.sh"},
-    "H200": {"shapes": ["BM.GPU.H200.8"], "threshold": 365.0, "script": "/opt/oci-hpc/samples/gpu/nccl_run_allreduce_H100_200.sh"}
+    "A100": {"shapes": ["BM.GPU4.8", "BM.GPU.B4.8", "BM.GPU.A100-v2.8"], "threshold": 185.0, "script": "/opt/oci-hpc/samples/gpu/nccl_run_allreduce.sh"},
+    "H100": {"shapes": ["BM.GPU.H100.8"], "threshold": 440.0, "script": "/opt/oci-hpc/samples/gpu/nccl_run_allreduce_H100_200.sh"},
+    "H200": {"shapes": ["BM.GPU.H200.8"], "threshold": 440.0, "script": "/opt/oci-hpc/samples/gpu/nccl_run_allreduce_H100_200.sh"}
 }
 
 # ANSI escape codes for colors
@@ -57,8 +57,8 @@ def copy_node_ordering_script():
 # Fetch list of Slurm nodes using sinfo.
 def get_hosts_from_sinfo():
     try:
-        hosts_output = subprocess.check_output(['sinfo', '-N', '-h', '-o', '%N'], text=True)
-        return [line.strip() for line in hosts_output.split('\n') if line.strip()]
+        hosts_output = subprocess.check_output(['sinfo', '-N', '-h', '-o', '%N'])
+        return [line.strip() for line in hosts_output.decode('utf-8').split('\n') if line.strip()]
     except subprocess.CalledProcessError as e:
         print(f"Error fetching hosts from sinfo: {e}")
         return []
@@ -109,7 +109,7 @@ def get_remote_node_shape(node):
             f'ssh {node} '
             f'"curl -sH \\"Authorization: Bearer Oracle\\" -L http://169.254.169.254/opc/v2/instance/ | jq -r .shape"'
         )
-        return subprocess.check_output(cmd, shell=True, text=True).strip()
+        return subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
     except subprocess.CalledProcessError as e:
         print(f"Error fetching node shape from {node}: {e}")
         return None
@@ -135,14 +135,14 @@ def run_nccl_test(host1, host2, nccl_script, timeout=120):
     cmd = ['timeout', str(timeout), nccl_script, '1', hosts_file]
 
     try:
-        output = subprocess.check_output(cmd, text=True)
+        output = subprocess.check_output(cmd)
 
         # Save full output to log
         with open(NCCL_LOG_FILE, 'a') as log_file:
-            log_file.write(f"\nNCCL output for {host1} and {host2}:\n{output}\n")
+            log_file.write(f"\nNCCL output for {host1} and {host2}:\n{output.decode('utf-8')}\n")
 
         valid_line = None
-        for line in output.split('\n'):
+        for line in output.decode('utf-8').split('\n'):
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
@@ -157,7 +157,7 @@ def run_nccl_test(host1, host2, nccl_script, timeout=120):
 
         if not valid_line:
             print(f"Warning: No valid bandwidth data for {host1} and {host2}. Full output logged.")
-            return None
+            return float(0)
 
         return float(valid_line.split()[-2])
     except subprocess.TimeoutExpired:
@@ -218,7 +218,7 @@ def find_bad_nodes_serial(hosts):
         print(f"Running NCCL test between: {host1} and {host2}...")
 
         # Get the shape from the first node
-        shape = get_remote_node_shape(host1)
+        shape = get_remote_node_shape(host1).decode('utf-8')
         if not shape:
             print(f"Unable to fetch node shape from {host1}. Exiting.")
             return
@@ -250,6 +250,8 @@ def find_bad_nodes_serial(hosts):
     # Run NCCL Tests for all pairs
     results = {}
     print("\nRunning NCCL Tests sequentially...")
+    if len(reachable_hosts) % 2 == 1:
+        reachable_hosts.append(reachable_hosts[0])
     total_pairs = len(reachable_hosts) // 2
     for i, (host1, host2) in enumerate(zip(reachable_hosts[::2], reachable_hosts[1::2]), 1):
         shape1 = get_remote_node_shape(host1)
