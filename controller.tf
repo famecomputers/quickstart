@@ -220,17 +220,6 @@ resource "null_resource" "controller" {
   }
 
   provisioner "file" {
-    content     = tls_private_key.ssh.private_key_openssh
-    destination = "/home/${var.controller_username}/.ssh/cluster.key"
-    connection {
-      host        = local.host_login
-      type        = "ssh"
-      user        = var.controller_username
-      private_key = tls_private_key.ssh.private_key_pem
-    }
-  }
-
-  provisioner "file" {
     content     = tls_private_key.ssh.public_key_openssh
     destination = "/home/${var.controller_username}/.ssh/id_rsa.pub"
     connection {
@@ -240,17 +229,6 @@ resource "null_resource" "controller" {
       private_key = tls_private_key.ssh.private_key_pem
     }
   }  
-  
-  provisioner "file" {
-    content     = tls_private_key.ssh.public_key_openssh
-    destination = "/home/${var.controller_username}/.ssh/id_rsa.pub"
-    connection {
-      host        = local.host_login
-      type        = "ssh"
-      user        = var.controller_username
-      private_key = tls_private_key.ssh.private_key_pem
-    }
-  }
 }
 resource "null_resource" "cluster" {
   depends_on = [null_resource.controller, null_resource.backup, oci_core_compute_cluster.compute_cluster, oci_core_cluster_network.cluster_network, oci_core_instance.controller, oci_core_volume_attachment.controller_volume_attachment]
@@ -526,20 +504,6 @@ resource "null_resource" "cluster" {
     destination = "/opt/oci-hpc/autoscaling/credentials/key.pem"
     connection {
       host        = local.host
-      type        = "ssh"
-      user        = var.controller_username
-      private_key = tls_private_key.ssh.private_key_pem
-    }
-  }
-  
-  provisioner "remote-exec" {
-    inline = [
-      "#!/bin/bash",
-      "chmod 600 /home/${var.controller_username}/.ssh/cluster.key",
-      "cp /home/${var.controller_username}/.ssh/cluster.key /home/${var.controller_username}/.ssh/id_rsa"
-    ]
-    connection {
-      host        = local.host_login
       type        = "ssh"
       user        = var.controller_username
       private_key = tls_private_key.ssh.private_key_pem
