@@ -983,4 +983,4 @@ if __name__ == '__main__':
 
     if slurm_error_count > 0 and args.slurm:
         print("Healthcheck:: "+slurm_drain_reason[:-1])
-        print("Healthcheck:: Recommended Action:"+action)
+        print("Healthcheck:: Recommended Action:"+str(action))
