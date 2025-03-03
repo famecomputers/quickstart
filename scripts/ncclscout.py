@@ -190,11 +190,14 @@ def update_progress(progress_tracker):
         print_progress_bar(progress_tracker['completed'], progress_tracker['total'], prefix='Testing pairs')
 
 # Retest each bad node by pairing it with a known good node (Sequential with progress bar)
-def retest_bad_nodes_with_progress(bad_nodes, good_node, nccl_script):
-    print("\n\nRetesting bad nodes with a known good node...")
+def retest_bad_nodes_with_progress(bad_nodes, good_nodes, nccl_script):
+    print("\n\nRetesting bad nodes with known good nodes...")
     retest_results = {}
     total_retests = len(bad_nodes)
+    good_nodes_cycle = iter(good_nodes)
+
     for idx, node in enumerate(bad_nodes, 1):
+        good_node = next(good_nodes_cycle)
         print(f"Retesting NCCL test between {good_node} and {node}...", end='')
         bandwidth = run_nccl_test(good_node, node, nccl_script)
         if bandwidth is not None:
@@ -218,7 +221,7 @@ def find_bad_nodes_serial(hosts):
         print(f"Running NCCL test between: {host1} and {host2}...")
 
         # Get the shape from the first node
-        shape = get_remote_node_shape(host1).decode('utf-8')
+        shape = get_remote_node_shape(host1)
         if not shape:
             print(f"Unable to fetch node shape from {host1}. Exiting.")
             return
@@ -250,8 +253,6 @@ def find_bad_nodes_serial(hosts):
     # Run NCCL Tests for all pairs
     results = {}
     print("\nRunning NCCL Tests sequentially...")
-    if len(reachable_hosts) % 2 == 1:
-        reachable_hosts.append(reachable_hosts[0])
     total_pairs = len(reachable_hosts) // 2
     for i, (host1, host2) in enumerate(zip(reachable_hosts[::2], reachable_hosts[1::2]), 1):
         shape1 = get_remote_node_shape(host1)
@@ -274,6 +275,15 @@ def find_bad_nodes_serial(hosts):
             results[(host1, host2)] = bandwidth
         print_progress_bar(i, total_pairs, prefix='Testing pairs')
 
+    # Handle the last node if the number of nodes is odd
+    if len(reachable_hosts) % 2 == 1:
+        last_node = reachable_hosts[-1]
+        known_good_node = reachable_hosts[0]
+        print(f"Running NCCL test between {known_good_node} and {last_node}...", end='')
+        bandwidth = run_nccl_test(known_good_node, last_node, script1)
+        if bandwidth is not None:
+            results[(known_good_node, last_node)] = bandwidth
+
     # Final Results Display
     print("\n\nFinal NCCL Test Results:")
     for (host1, host2), bandwidth in sorted(results.items(), key=lambda x: x[1], reverse=True):
@@ -286,8 +296,7 @@ def find_bad_nodes_serial(hosts):
 
     # Retest bad nodes if there are good nodes
     if good_nodes:
-        known_good_node = next(iter(good_nodes))
-        retest_results = retest_bad_nodes_with_progress(bad_nodes, known_good_node, script1)
+        retest_results = retest_bad_nodes_with_progress(bad_nodes, good_nodes, script1)
 
         # Retest Summary
         if retest_results:
@@ -296,7 +305,7 @@ def find_bad_nodes_serial(hosts):
                 color = COLOR_GREEN if bw >= threshold else COLOR_RED
                 print(f"Retest between {good_node} and {bad_node}: {color}{bw:.2f} GB/s{COLOR_RESET}")
 
-        # Summary
+    # Summary
     print("\nSummary:")
     print(f"\nNote: A100 BW Threshold: 160, H100 and H200 BW Threshold: 365")
     print(f"\nGood Bandwidth Pairs (≥ threshold): {len([bw for bw in results.values() if bw >= threshold])}")
@@ -367,6 +376,12 @@ def find_bad_nodes_parallel(hosts):
         thresholds[(host1, host2)] = threshold
         pairs_to_test.append((host1, host2, script1))
 
+    # Handle the last node if the number of nodes is odd
+    if len(reachable_hosts) % 2 == 1:
+        last_node = reachable_hosts[-1]
+        known_good_node = reachable_hosts[0]
+        pairs_to_test.append((known_good_node, last_node, script1))
+
     # Start parallel testing
     print("\nRunning NCCL Tests parallely...")
     progress_tracker = {'completed': 0, 'total': len(pairs_to_test)}
@@ -401,8 +416,7 @@ def find_bad_nodes_parallel(hosts):
 
     # Retest bad nodes
     if good_nodes:
-        known_good_node = next(iter(good_nodes))
-        retest_results = retest_bad_nodes_with_progress(bad_nodes, known_good_node, script1)
+        retest_results = retest_bad_nodes_with_progress(bad_nodes, good_nodes, script1)
 
         print("\nRetest Results:")
         for (good_node, bad_node), bandwidth in retest_results.items():
