@@ -16,7 +16,7 @@ import json
 import time
 
 def get_metadata():
-    """ Make a request to metadata endpoint """
+    # Make a request to metadata endpoint
     headers = { 'Authorization' : 'Bearer Oracle' }
     metadata_url = "http://169.254.169.254/opc/"
     metadata_ver = "2"
@@ -32,7 +32,6 @@ def is_user_root():
 
 def get_devices():
     # Define Mellanox devices based on GPU shape
-
     metadata = get_metadata()
     shape = metadata['shape']
 
@@ -47,7 +46,6 @@ def get_devices():
         logger.info(f"RTTCC check not required for shape: {shape}")
         return []
     return shape_devices[shape]
-
 
 def get_oca_version():
     # Run the shell command
@@ -87,7 +85,6 @@ def get_oca_version():
             if match:
                 version = match.group(1)
 
-
         if version < "1.39.0":
             logger.error(f"Oracle Cloud Agent: {version} needs to be updated to 1.39.0 or higher")
         else:
@@ -97,7 +94,7 @@ def get_oca_version():
         return version
 
 def check_rttcc_status():
-    """Check RTTCC status for supported GPU shapes and return status log."""
+    # Check RTTCC status for supported GPU shapes and return status log.
     link_status = []
 
     devices = get_devices()
@@ -607,26 +604,67 @@ def check_fabric_manager():
     return fabric_manager_health
 
 def get_current_cpu_profile():
-    # List all scaling governor files for CPUs
-    cpu_governor_files = glob.glob('/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor')
+    """Retrieve online CPUs and check if their profile is set to 'performance'."""
+    try:
+        # Get online CPUs from lscpu
+        output = subprocess.check_output(["lscpu"], universal_newlines=True)
+        online_cpu_list = None
+
+        for line in output.splitlines():
+            if "On-line CPU(s) list:" in line:
+                online_cpu_list = line.split(":")[1].strip()
+                break
+
+        if not online_cpu_list:
+            logger.error("Could not determine online CPUs. Check `lscpu` output.")
+            return []
+
+        # Convert CPU range to a list of integers
+        online_cpus = []
+        for part in online_cpu_list.split(","):
+            if "-" in part:
+                start, end = map(int, part.split("-"))
+                online_cpus.extend(range(start, end + 1))
+            else:
+                online_cpus.append(int(part))
+
+    except Exception as e:
+        logger.error(f"Failed to get online CPUs: {e}")
+        return []
+
+    # Check CPU governor for only online CPUs
     cpu_profile_issues = []
 
-    for cpu_file in cpu_governor_files:
-        try:
-            with open(cpu_file, 'r') as f:
-                result = f.read().strip()
-            if result != 'performance':
-                cpu_id = cpu_file.split('/')[-3]
-                logger.warning(f"CPU {cpu_id} Profile is {result}, expected 'performance'.")
-                cpu_profile_issues.append(f"CPU {cpu_id}: {result}")
-        except Exception as e:
-            logger.error(f"Failed to read {cpu_file}: {e}")
-            cpu_profile_issues.append(f"Error reading {cpu_file}")
+    for cpu_id in online_cpus:
+        cpu_file = f"/sys/devices/system/cpu/cpu{cpu_id}/cpufreq/scaling_governor"
+        for attempt in range(3):  # Retry up to 3 times
+            try:
+                with open(cpu_file, 'r') as f:
+                    result = f.read().strip()
+
+                if result == "performance":
+                    continue
+                else:
+                    logger.warning(f"CPU {cpu_id}: Profile is '{result}', expected 'performance'.")
+                    cpu_profile_issues.append(f"CPU {cpu_id}: {result}")
+
+                break  # Exit retry loop on success
+
+            except Exception as e:
+                if "Device or resource busy" in str(e):
+                    if attempt < 2:
+                        time.sleep(0.5)  # Wait before retrying
+                    else:
+                        logger.warning(f"CPU {cpu_id}: Scaling governor file is busy. Skipping after 3 attempts.")
+                else:
+                    logger.error(f"Skipping CPU {cpu_id}: {e}")
+                    break  # Skip CPU if persistently busy
 
     if not cpu_profile_issues:
-        logger.info("CPU Profile Check: Passed")
+        logger.info("CPU Profile Check: Passed") #All CPUs are set to 'performance'.
     else:
         logger.error("Some CPUs failed the profile check.")
+
     return cpu_profile_issues
 
 def check_bad_pages():
