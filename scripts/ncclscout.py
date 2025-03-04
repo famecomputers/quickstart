@@ -364,6 +364,7 @@ def find_bad_nodes_serial(hosts):
     print("   ", ", ".join(sorted(confirmed_bad_nodes)))
     print(f"\nMaximum Bandwidth: {max(results.values()) if results else 0.0} GB/s")
     print(f"Minimum Bandwidth: {min(results.values()) if results else 0.0} GB/s")
+    print("Please perform healtchchecks if there are any bad node(s).")
 
 # Main function to find and report bad nodes based on NCCL test results. (Parallel)
 def find_bad_nodes_parallel(hosts):
@@ -431,11 +432,11 @@ def find_bad_nodes_parallel(hosts):
     if len(reachable_hosts) % 2 == 1:
         last_node = reachable_hosts[-1]
         known_good_node = reachable_hosts[0]
-        pairs_to_test.append((known_good_node, last_node, script1))
+        if (known_good_node, last_node) not in pairs_to_test:
+            pairs_to_test.append((known_good_node, last_node, script1))
 
     # Start parallel testing
     print("\nRunning NCCL Tests in parallel...")
-    progress_tracker = {'completed': 0, 'total': len(pairs_to_test)}
     results = {}
     timeout_nodes = set()
 
@@ -453,9 +454,7 @@ def find_bad_nodes_parallel(hosts):
             except Exception as e:
                 print(f"Error running NCCL test for pair ({host1}, {host2}): {e}")
 
-            # Update progress after each completed task
-            update_progress(progress_tracker)
-
+    # Print Initial NCCL Test Results
     print("\n\nInitial NCCL Test Results:")
     good_nodes, bad_nodes = set(), set()
     for (host1, host2), bandwidth in sorted(results.items(), key=lambda x: x[1], reverse=True):
@@ -477,15 +476,16 @@ def find_bad_nodes_parallel(hosts):
     # Retest nodes that failed due to low bandwidth.
     low_bw_retest_results = {}
     if good_nodes and bad_nodes:
-        low_bw_retest_results = retest_bad_nodes_with_progress(bad_nodes, good_nodes, script1, reason="low bandwidth")
-        results.update(low_bw_retest_results)
+        bad_nodes_for_retest = {node for node in bad_nodes if node not in good_nodes}
+        if bad_nodes_for_retest:
+            low_bw_retest_results = retest_bad_nodes_with_progress(bad_nodes_for_retest, good_nodes, script1, reason="low bandwidth")
+            results.update(low_bw_retest_results)
 
     # Retest Summary for Timeout Failures.
     if timeout_retest_results:
         print("\nRetest Results for Timeout Failures:")
         for (good_node, bad_node), bw in timeout_retest_results.items():
-            threshold = min(determine_gpu_model(get_remote_node_shape(good_node))[1],
-                            determine_gpu_model(get_remote_node_shape(bad_node))[1])
+            threshold = min(thresholds.get((good_node, bad_node), 0), thresholds.get((bad_node, good_node), 0))
             color = COLOR_GREEN if bw >= threshold else COLOR_RED
             print(f"Retest between {good_node} and {bad_node}: {color}{bw:.2f} GB/s{COLOR_RESET}")
 
@@ -493,26 +493,26 @@ def find_bad_nodes_parallel(hosts):
     if low_bw_retest_results:
         print("\nRetest Results for Low Bandwidth Failures:")
         for (good_node, bad_node), bw in low_bw_retest_results.items():
-            threshold = min(determine_gpu_model(get_remote_node_shape(good_node))[1],
-                            determine_gpu_model(get_remote_node_shape(bad_node))[1])
+            threshold = min(thresholds.get((good_node, bad_node), 0), thresholds.get((bad_node, good_node), 0))
             color = COLOR_GREEN if bw >= threshold else COLOR_RED
             print(f"Retest between {good_node} and {bad_node}: {color}{bw:.2f} GB/s{COLOR_RESET}")
 
     # Finalize Good & Bad Node Lists.
-    final_good_nodes = {host for pair, bw in results.items() if bw >= threshold for host in pair}
-    final_bad_nodes = {host for pair, bw in results.items() if bw < threshold for host in pair}
+    final_good_nodes = {host for pair, bw in results.items() if bw >= thresholds.get(pair, 0) for host in pair}
+    final_bad_nodes = {host for pair, bw in results.items() if bw < thresholds.get(pair, 0) for host in pair}
     confirmed_bad_nodes = {node for node in final_bad_nodes if node not in final_good_nodes}
 
+    # Print Summary
     print("\nSummary:")
-    print(f"\nGood Bandwidth Pairs (≥ threshold): {len([bw for bw in results.values() if bw >= threshold])}")
-    print(f"Bad Bandwidth Pairs (< threshold): {len([bw for bw in results.values() if bw < threshold])}")
+    print(f"\nGood Bandwidth Pairs (≥ threshold): {len([bw for bw in results.values() if bw >= min(thresholds.values())])}")
+    print(f"Bad Bandwidth Pairs (< threshold): {len([bw for bw in results.values() if bw < min(thresholds.values())])}")
     print(f"\nTotal Good Nodes: {len(final_good_nodes)}")
     print("   ", ", ".join(sorted(final_good_nodes)))
     print(f"\nTotal Bad Nodes: {len(confirmed_bad_nodes)}")
     print("   ", ", ".join(sorted(confirmed_bad_nodes)))
     print(f"\nMaximum Bandwidth: {max(results.values()) if results else 0.0} GB/s")
     print(f"Minimum Bandwidth: {min(results.values()) if results else 0.0} GB/s")
-    print("Please perform healtchchecks if there are any bad node(s).")
+    print("Please perform health checks if there are any bad nodes.")
 
 def main():
     # Argument parsing setup
