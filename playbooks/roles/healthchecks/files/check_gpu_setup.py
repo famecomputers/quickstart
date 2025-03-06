@@ -732,7 +732,7 @@ if __name__ == '__main__':
     parser.add_argument('--lf-interval', dest='lf_interval', default=6, type=int, help='Link flapping interval with no flapping or link down events (default: 6 (hours))')
     parser.add_argument('-a','--all', dest='run_all', action='store_true', default=False, help='Run all checks (default: False)')
     parser.add_argument('-slurm','--slurm', dest='slurm', action='store_true', default=False, help='Add a Slurm message')
-    parser.add_argument('-wa', '--wpa-auth', action="store_true", default=False, help="Run WPA authentication check")
+    parser.add_argument('-wa', '--wpa-auth', action="store_true", default=True, help="Run WPA authentication check")
     args = parser.parse_args()
 
     logger.setLevel(args.log_level)
