@@ -228,8 +228,33 @@ resource "null_resource" "controller" {
       user        = var.controller_username
       private_key = tls_private_key.ssh.private_key_pem
     }
-  }  
+  }
+
+  provisioner "file" {
+    source = "scripts/stackversion"
+    destination = "/tmp/stackversion"
+    connection {
+      host        = local.host
+      type        = "ssh"
+      user        = var.controller_username
+      private_key = tls_private_key.ssh.private_key_pem
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mv /tmp/stackversion /usr/bin/stackversion",   
+      "sudo chmod +x /usr/bin/stackversion"              
+    ]
+    connection { 
+      host        = local.host
+      type        = "ssh"
+      user        = var.controller_username
+      private_key = tls_private_key.ssh.private_key_pem
+    }
+  }
 }
+
 resource "null_resource" "cluster" {
   depends_on = [null_resource.controller, null_resource.backup, oci_core_compute_cluster.compute_cluster, oci_core_cluster_network.cluster_network, oci_core_instance.controller, oci_core_volume_attachment.controller_volume_attachment]
   triggers = {
