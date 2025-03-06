@@ -25,6 +25,11 @@ variable "use_multiple_ads" {
 variable "ssh_key" {
   type = string
 }
+variable "compute_node_ssh_key" {
+  type = string
+  default = "" 
+}
+
 variable "cluster_network" { 
   default = true 
   type = bool
