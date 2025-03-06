@@ -1,6 +1,6 @@
 #!/bin/bash
-echo Release: v2.11.333
-echo Tag: No tag found
-echo Latest Commit Hash: e3b9ca91ebcfbf978f127e6595e3d96d90ac34b9
-echo Latest Commit Date: 2025-03-06 12:57:59 -0600
+echo Release: v.2.11.555
+echo Tag: v.2.11.555
+echo Latest Commit Hash: 53f2004c807c0d5c89a75dd39b017adf35f88254
+echo Latest Commit Date: 2025-03-06 18:58:14 +0000
 echo Github Branch Version: 2.11.1_stackversion
